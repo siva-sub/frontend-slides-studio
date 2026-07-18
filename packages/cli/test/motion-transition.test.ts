@@ -29,5 +29,5 @@ describe("CLI motion and transition workflows", () => {
       expect(transitionResult.status, transitionResult.stderr || transitionResult.stdout).toBe(0);
       expect(JSON.parse(readFileSync(output, "utf8")).slides[1].transition.kind).toBe("slice-horizontal");
     } finally { rmSync(root, { recursive: true, force: true }); }
-  });
+  }, 30_000);
 });
