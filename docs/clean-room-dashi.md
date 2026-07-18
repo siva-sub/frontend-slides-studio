@@ -29,6 +29,12 @@ system does, never *how* a specific Dashi module is written:
 3. **Explicit normalization reports** — when content is normalized into a
    layout, surface substitutions and validation issues instead of silently
    mutating. Implemented in the layout/style-registry normalizers.
+4. **Editor URL handoff** — a deck workflow ends by opening the requested source
+   in a local editor URL rather than leaving the user with an unexplained file.
+   Frontend Slides Studio implements this behavior independently through a
+   one-file, token-authenticated Vite bridge in `apps/studio`, atomic save-back,
+   and a separate contained export service. No Dashi launcher, preview-server,
+   autosave, or export-route code was copied.
 
 ## Prohibited imports
 

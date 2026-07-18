@@ -38,6 +38,8 @@ Then start a presentation task with:
 /frontend-slides-studio:frontend-slides-studio
 ```
 
+Pi users should clone and build the workspace, then install the reviewed local path with `pi install "$(pwd)"`. Run `/reload` in an existing session and invoke `/skill:frontend-slides-studio ...` when explicit routing is useful. The complete core and optional dependency matrix is in [Getting Started](docs/getting-started.md) and `skills/frontend-slides-studio/references/setup.md`.
+
 For Codex, Cursor, or another filesystem-capable coding agent, point the agent to this repository and ask it to follow `skills/frontend-slides-studio/SKILL.md`. Generated agent-specific copies are also available under `integrations/`.
 
 ### 2. Use the Studio Editor
@@ -45,11 +47,15 @@ For Codex, Cursor, or another filesystem-capable coding agent, point the agent t
 ```bash
 git clone https://github.com/siva-sub/frontend-slides-studio.git
 cd frontend-slides-studio
-pnpm install
-pnpm dev:studio
+corepack enable
+corepack prepare pnpm@11.3.0 --activate
+pnpm install --frozen-lockfile
+pnpm build
+pnpm cli -- new demo.html
+pnpm studio:open -- --input "$(realpath demo.html)"
 ```
 
-Open `http://127.0.0.1:4173`. Studio can import arbitrary discrete-slide HTML, edit objects through a sandboxed preview, manage slide order and media, choose styles and recipes, insert diagrams, configure motion, run a current-page audit, and submit local evidence-gated exports.
+The launcher starts a loopback Studio session and prints an authenticated URL such as `http://127.0.0.1:4173/?session=...`. Open the complete URL: the requested deck loads automatically, Save atomically updates only that configured source, and the absolute export path is prefilled. Studio provides sandboxed Browse/Edit/Move modes, slide and media operations, styles and recipes, diagrams, motion, current-page audit, and evidence-gated export. Use `pnpm dev:studio` only for a welcome-only development session.
 
 ### 3. Use the CLI
 
@@ -73,7 +79,7 @@ See the complete [Getting Started Guide](docs/getting-started.md) for prerequisi
 | Area | Delivered capability |
 | --- | --- |
 | Agent workflow | Canonical skill plus generated Claude, Codex, Cursor, and plugin integrations for create, import/edit, assets, diagrams, motion, visual masters, validation, and export |
-| Studio | React/Vite/Zustand local editor with sandboxed import, Browse/Edit/Move modes, scale-correct selection and manipulation, snapping, eight-handle resize, layers, slide operations, history, File System Access saving, media controls, styles, diagrams, motion, quality focus, and export jobs |
+| Studio | React/Vite/Zustand local editor with an authenticated one-file launch bridge, atomic save-back, sandboxed import, Browse/Edit/Move modes, scale-correct selection and manipulation, snapping, eight-handle resize, layers, slide operations, history, File System Access fallback, media controls, styles, diagrams, motion, quality focus, and export jobs |
 | Runtime | Dependency-free IIFE with fixed-stage navigation, replay-safe WAAPI motion, ten transition kinds, adjacent preload, reduced-motion behavior, and deterministic settled export state |
 | Styles and recipes | Browser-safe typed registry of 32 Apache-2.0 style systems, 256 layouts, and 6 recipes with deterministic queries, inspection, scaffolding, normalization, and generated-data drift checks |
 | Diagrams | Versioned DiagramSpec contracts and exhaustive deterministic adapters for 27 diagram types, rendered through stable editable primitives to SVG and native presentation objects |

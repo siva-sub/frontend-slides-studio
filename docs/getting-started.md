@@ -15,13 +15,13 @@ Some workflows need additional local tools:
 | Workflow | Additional tools |
 | --- | --- |
 | Browser smoke tests and export | Playwright Chromium |
-| Motion analysis | Python 3, ffmpeg, and ffprobe |
+| Motion analysis and video media | Python 3.10+, ffmpeg, and ffprobe |
 | PDF inspection | Poppler utilities |
-| Raster or editable PPTX | Python Pillow and python-pptx |
+| Optional visual-master tooling | Python 3.10+, packages in `visual/requirements.txt`, and explicit provider credentials for network generation |
 | Editable-PPTX render-back | LibreOffice |
-| Optional visual-master tooling | Packages listed in `visual/requirements.txt` and an explicitly configured provider |
+| Optional PPTX extraction/inspection | python-pptx |
 
-Check the core command-line tools visible to the project after installation. This probe covers Node, pnpm, Python, ffmpeg/ffprobe, and LibreOffice; install Playwright, Poppler, Pillow, and python-pptx separately when their workflows require them.
+Ordinary Studio authoring and share HTML do not require Python, ffmpeg, LibreOffice, or provider credentials. Check the command-line tools visible to the project after installation:
 
 ```bash
 pnpm cli -- doctor
@@ -32,11 +32,27 @@ pnpm cli -- doctor
 ```bash
 git clone https://github.com/siva-sub/frontend-slides-studio.git
 cd frontend-slides-studio
+corepack enable
+corepack prepare pnpm@11.3.0 --activate
 pnpm install --frozen-lockfile
 pnpm build
 ```
 
-If pnpm is not installed, install pnpm 11.3 using the method recommended for your Node distribution, then rerun the commands above.
+If Corepack is unavailable, run `npm install --global pnpm@11.3.0`. Install Playwright Chromium only when browser quality checks, PDF, raster PPTX, or smoke tests are needed:
+
+```bash
+pnpm --filter @slides-studio/export-service exec playwright install chromium
+```
+
+For Python visual workflows, create and activate a virtual environment before starting Pi or the export service:
+
+```bash
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r visual/requirements.txt
+```
+
+See `skills/frontend-slides-studio/references/setup.md` for Linux/macOS system packages and capability-specific setup profiles.
 
 ## Option A: Create with an Agent
 
@@ -66,23 +82,39 @@ A useful first request is:
 Create a 10-slide speaker-led product launch deck. Use supplied product screenshots as real assets, include one architecture diagram, and deliver author HTML, share HTML, and a quality-gated PDF.
 ```
 
+### Pi
+
+Review the checked-out repository, then install it as a local-path Pi package:
+
+```bash
+pi install "$(pwd)"
+```
+
+Use `pi install -l "$(pwd)"` for project-local settings. Run `/reload` in an existing Pi session, then invoke the skill explicitly or let Pi route a presentation request to it:
+
+```text
+/skill:frontend-slides-studio Create a 10-slide product launch deck, open it in Studio, and deliver a quality-gated PDF.
+```
+
+Local-path installation is recommended for this pnpm workspace. `pi list` should show the package after installation.
+
 ### Other Coding Agents
 
 Ask the agent to read `skills/frontend-slides-studio/SKILL.md` and follow the routed workflow. Generated copies for Claude, Codex, and Cursor are available under `integrations/`. The canonical skill remains the source of truth.
 
 ## Option B: Edit in Studio
 
-Start the local editor:
+Launch one exact HTML source:
 
 ```bash
-pnpm dev:studio
+pnpm studio:open -- --input "$(realpath deck.html)"
 ```
 
-Open `http://127.0.0.1:4173`.
+The command starts Studio on the first available loopback port from 4173 and prints a complete URL such as `http://127.0.0.1:4173/?session=...`. Open that complete URL. The requested file loads automatically; no file picker is required. The launch bridge can read and atomically save only the one server-configured file, and Studio pre-fills its absolute export path.
 
 A typical Studio session is:
 
-1. Open or import an HTML presentation.
+1. Confirm the header shows the expected filename, page count, import strategy, and confidence.
 2. Use **Browse** mode to navigate without changing the deck.
 3. Use **Edit** mode to select text or media and change inspector values.
 4. Use **Move** mode to drag, snap, resize, layer, or delete selected objects.
@@ -90,10 +122,16 @@ A typical Studio session is:
 6. Choose a style or recipe, insert a stable-ID diagram, or configure object motion.
 7. Replace and reframe images with contain/cover, focal-point, pan, and zoom controls.
 8. Run the current-page quality audit and focus reported issues.
-9. Save in place through the File System Access API when supported, or save a copy.
-10. Start the local export service and submit the saved absolute path for PDF or raster PPTX.
+9. Wait for `UNSAVED`, then press **Save**. Reload the same authenticated URL to confirm persistence.
+10. Start the local export service and submit the already-prefilled saved path for PDF or raster PPTX.
 
-Studio history keeps up to 50 exact snapshots. Imported decks run in a sandboxed iframe so their scripts and styles cannot take over the host editor.
+The launcher prints its log and stop command. Stop the session when finished:
+
+```bash
+pnpm studio:stop -- --state .slides-studio/studio-<port>.json
+```
+
+Use `pnpm dev:studio` only for a welcome-only development session. Studio history keeps up to 50 exact snapshots, and imported decks run in a sandboxed iframe so their scripts and styles cannot take over the host editor.
 
 ## Option C: Create or Import with the CLI
 

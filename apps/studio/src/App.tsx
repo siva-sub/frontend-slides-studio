@@ -6,6 +6,7 @@ import { injectStudioBridge } from "./lib/bridge";
 import { deleteSlide, duplicateSlide, reorderSlide, toggleSlideSkipped } from "./lib/deckOperations";
 import { insertDiagram } from "./lib/diagram";
 import { submitExportJob, waitForExportJob, type ExportFormat, type ExportJob, type ExportQualityGate } from "./lib/export";
+import { launchToken, loadLaunchSession, saveLaunchSession, type StudioLaunchSession } from "./lib/launch";
 import {
   applyMediaReframe,
   applyMediaSource,
@@ -66,6 +67,7 @@ export function App() {
   const [previewAssetRevision, setPreviewAssetRevision] = useState(0);
   const [frameSource, setFrameSource] = useState("");
   const [importNotice, setImportNotice] = useState("No source file is overwritten until Save is explicit.");
+  const [launchSession, setLaunchSession] = useState<StudioLaunchSession | null>(null);
   const [assetPrompt, setAssetPrompt] = useState("");
   const [assetService, setAssetService] = useState("http://127.0.0.1:4317");
   const [assetToken, setAssetToken] = useState(() => sessionStorage.getItem("slides-studio-asset-token") ?? "");
@@ -100,7 +102,19 @@ export function App() {
     setQualityReport(null);
   };
 
-  useEffect(() => { void load("welcome.html", welcomeDeck); }, []);
+  useEffect(() => {
+    const token = launchToken();
+    if (!token) { void load("welcome.html", welcomeDeck); return; }
+    void loadLaunchSession(token).then(async (session) => {
+      setLaunchSession(session);
+      setExportSourcePath(session.sourcePath);
+      await load(session.fileName, session.html);
+      setImportNotice(`Opened ${session.fileName} through the authenticated Studio launch bridge. Save writes atomically to the configured source.`);
+    }).catch((error) => {
+      void load("welcome.html", welcomeDeck);
+      setImportNotice(`Studio launch failed: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  }, []);
   useEffect(() => { frame.current?.contentWindow?.postMessage({ type: "studio:set-mode", protocolVersion: 1, mode: store.mode }, "*"); }, [store.mode, frameSource]);
   useEffect(() => {
     if (!store.sourceHtml || store.historyIndex < 0) return;
@@ -137,14 +151,20 @@ export function App() {
 
   const srcDoc = useMemo(() => frameSource ? injectStudioBridge(resolvePreviewMediaSources(frameSource, previewAssetUrls.current)) : "", [frameSource, previewAssetRevision]);
   const selectSlide = (index: number) => { store.setCurrentSlide(index); setQualityReport(null); frame.current?.contentWindow?.postMessage({ type: "studio:go-to", protocolVersion: 1, index }, "*"); };
-  const applyInspectorText = (text: string) => { if (!store.selectedObjectId) return; frame.current?.contentWindow?.postMessage({ type: "studio:patch", protocolVersion: 1, objectId: store.selectedObjectId, patch: { text } }, "*"); };
+  const applyInspectorText = (text: string) => {
+    if (!store.selectedObjectId) return;
+    const message = { type: "studio:patch", protocolVersion: 1, objectId: store.selectedObjectId, patch: { text } } as const;
+    const next = patchSource(store.sourceHtml, message);
+    frame.current?.contentWindow?.postMessage(message, "*");
+    void revisionFor(next).then((revision) => { store.commit(next, `Edit ${message.objectId}`, revision); setQualityReport(null); });
+  };
   const restore = (direction: "undo" | "redo") => { direction === "undo" ? store.undo() : store.redo(); queueMicrotask(() => setFrameSource(useStudioStore.getState().sourceHtml)); };
   const commitDeckOperation = async (html: string, label: string) => { const revision = await revisionFor(html); store.commit(html, label, revision); store.setSlideCount(new DOMParser().parseFromString(html, "text/html").querySelectorAll(".slide").length); store.selectObject(null); setQualityReport(null); setFrameSource(html); };
   const applyLayer = (action: LayerAction) => { if (!store.selectedObjectId) return; void commitDeckOperation(changeObjectLayer(store.sourceHtml, store.selectedObjectId, action), `Layer ${action}`); };
   const nudgeSelected = (dx: number, dy: number) => frame.current?.contentWindow?.postMessage({ type: "studio:nudge-selected", protocolVersion: 1, dx, dy }, "*");
   const openNativeFile = async () => {
     const picker = (window as FilePickerWindow).showOpenFilePicker; if (!picker) { fileInput.current?.click(); return; }
-    try { const [handle] = await picker({ multiple: false, types: [{ description: "HTML deck", accept: { "text/html": [".html", ".htm"] } }] }); if (!handle) return; fileHandle.current = handle; const file = await handle.getFile(); await load(file.name, await file.text()); setImportNotice(`Opened ${file.name} with save-in-place permission.`); } catch (error) { if ((error as DOMException)?.name !== "AbortError") setImportNotice(error instanceof Error ? error.message : String(error)); }
+    try { const [handle] = await picker({ multiple: false, types: [{ description: "HTML deck", accept: { "text/html": [".html", ".htm"] } }] }); if (!handle) return; fileHandle.current = handle; setLaunchSession(null); setExportSourcePath(""); const file = await handle.getFile(); await load(file.name, await file.text()); setImportNotice(`Opened ${file.name} with save-in-place permission.`); } catch (error) { if ((error as DOMException)?.name !== "AbortError") setImportNotice(error instanceof Error ? error.message : String(error)); }
   };
   const attachFolderWorkspace = async () => {
     const picker = (window as FilePickerWindow).showDirectoryPicker;
@@ -154,6 +174,12 @@ export function App() {
   };
   const saveCurrent = async () => {
     try {
+      if (launchSession) {
+        const saved = await saveLaunchSession(launchSession, store.sourceHtml);
+        store.markSaved();
+        setImportNotice(`Saved ${store.fileName} atomically through the Studio launch bridge · ${saved.revision.slice(0, 12)}.`);
+        return;
+      }
       let handle = fileHandle.current;
       if (!handle && (window as FilePickerWindow).showSaveFilePicker) handle = await (window as FilePickerWindow).showSaveFilePicker!({ suggestedName: store.fileName, types: [{ description: "HTML deck", accept: { "text/html": [".html"] } }] });
       if (!handle) { download(store.fileName, store.sourceHtml); store.markSaved(); setImportNotice("Downloaded a copy; the imported source was not overwritten."); return; }
@@ -291,7 +317,7 @@ export function App() {
         <button className="quiet-button" onClick={() => { void attachFolderWorkspace(); }}>Attach folder</button>
         <button className="quiet-button" onClick={() => download(store.fileName, store.sourceHtml)}>Download copy</button>
         <button className="save-button" onClick={() => { void saveCurrent(); }}>Save <span>⌘S</span></button>
-        <input ref={fileInput} hidden type="file" accept=".html,.htm,text/html" onChange={(event) => { const file = event.target.files?.[0]; if (file) { fileHandle.current = null; void file.text().then((text) => load(file.name, text)); } }} />
+        <input ref={fileInput} hidden type="file" accept=".html,.htm,text/html" onChange={(event) => { const file = event.target.files?.[0]; if (file) { fileHandle.current = null; setLaunchSession(null); setExportSourcePath(""); void file.text().then((text) => load(file.name, text)); } }} />
         <input ref={mediaInput} hidden type="file" accept="image/*,video/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) void replaceSelectedMedia(file); event.currentTarget.value = ""; }} />
       </div>
     </header>
