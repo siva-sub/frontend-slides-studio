@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "family": "schedule",
+  "type": "gantt",
+  "id": "fixture-gantt",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "tasks": [
+      {
+        "id": "research",
+        "label": "Research",
+        "startMs": 0,
+        "endMs": 30
+      },
+      {
+        "id": "design",
+        "label": "Design",
+        "startMs": 20,
+        "endMs": 55
+      },
+      {
+        "id": "build",
+        "label": "Build",
+        "startMs": 45,
+        "endMs": 85
+      },
+      {
+        "id": "verify",
+        "label": "Verify",
+        "startMs": 78,
+        "endMs": 100
+      }
+    ],
+    "domain": {
+      "startMs": 0,
+      "endMs": 100
+    },
+    "timeAxis": "horizontal"
+  }
+}

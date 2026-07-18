@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 2,
+  "family": "process-state",
+  "type": "state",
+  "id": "fixture-state",
+  "variant": "editorial",
+  "direction": "ttb",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "startId": "idle",
+    "terminalIds": [
+      "complete"
+    ],
+    "orientation": "horizontal",
+    "steps": [
+      {
+        "id": "idle",
+        "label": "Idle"
+      },
+      {
+        "id": "editing",
+        "label": "Editing"
+      },
+      {
+        "id": "review",
+        "label": "Review"
+      },
+      {
+        "id": "complete",
+        "label": "Complete"
+      }
+    ],
+    "transitions": [
+      {
+        "id": "s1",
+        "source": "idle",
+        "target": "editing",
+        "label": "open"
+      },
+      {
+        "id": "s2",
+        "source": "editing",
+        "target": "review",
+        "label": "submit"
+      },
+      {
+        "id": "s3",
+        "source": "review",
+        "target": "editing",
+        "label": "revise",
+        "kind": "return"
+      },
+      {
+        "id": "s4",
+        "source": "review",
+        "target": "complete",
+        "label": "approve",
+        "kind": "accent"
+      }
+    ],
+    "lanes": []
+  }
+}

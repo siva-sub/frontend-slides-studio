@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "family": "process-state",
+  "type": "process",
+  "id": "fixture-process",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "startId": "discover",
+    "terminalIds": [
+      "learn"
+    ],
+    "orientation": "horizontal",
+    "steps": [
+      {
+        "id": "discover",
+        "label": "Discover"
+      },
+      {
+        "id": "design",
+        "label": "Design"
+      },
+      {
+        "id": "deliver",
+        "label": "Deliver"
+      },
+      {
+        "id": "learn",
+        "label": "Learn"
+      }
+    ],
+    "transitions": [
+      {
+        "id": "pr1",
+        "source": "discover",
+        "target": "design"
+      },
+      {
+        "id": "pr2",
+        "source": "design",
+        "target": "deliver"
+      },
+      {
+        "id": "pr3",
+        "source": "deliver",
+        "target": "learn",
+        "kind": "accent"
+      }
+    ],
+    "lanes": []
+  }
+}

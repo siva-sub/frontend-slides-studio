@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 2,
+  "family": "hierarchy",
+  "type": "tree",
+  "id": "fixture-tree",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "rootId": "strategy",
+    "orientation": "vertical",
+    "items": [
+      {
+        "id": "strategy",
+        "label": "Strategy"
+      },
+      {
+        "id": "growth",
+        "label": "Growth"
+      },
+      {
+        "id": "trust",
+        "label": "Trust"
+      },
+      {
+        "id": "acquire",
+        "label": "Acquire"
+      },
+      {
+        "id": "retain",
+        "label": "Retain"
+      },
+      {
+        "id": "quality",
+        "label": "Quality"
+      }
+    ],
+    "parents": [
+      {
+        "id": "growth",
+        "parentId": "strategy"
+      },
+      {
+        "id": "trust",
+        "parentId": "strategy"
+      },
+      {
+        "id": "acquire",
+        "parentId": "growth"
+      },
+      {
+        "id": "retain",
+        "parentId": "growth"
+      },
+      {
+        "id": "quality",
+        "parentId": "trust"
+      }
+    ]
+  }
+}

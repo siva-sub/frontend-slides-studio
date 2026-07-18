@@ -1,0 +1,65 @@
+{
+  "canvas": {
+    "height": 36,
+    "width": 64
+  },
+  "layers": [
+    {
+      "designMode": false,
+      "explicitRoute": null,
+      "id": "subject",
+      "metrics": {
+        "edge_contamination": 0.01,
+        "mask_confidence": 0.96,
+        "occlusion_ratio": 0.05
+      }
+    }
+  ],
+  "overlay": {
+    "alternatives": [
+      [
+        0.1,
+        0.1,
+        0.3,
+        0.3
+      ],
+      [
+        0.6,
+        0.1,
+        0.3,
+        0.3
+      ]
+    ],
+    "bbox": [
+      0.1,
+      0.1,
+      0.3,
+      0.3
+    ],
+    "protected": [
+      [
+        0.0,
+        0.0,
+        0.5,
+        1.0
+      ]
+    ]
+  },
+  "planned": false,
+  "prompts": {
+    "generation": "Reconstruct the slide subject as a transparent layer.",
+    "repair": "Repair the occluded background block only."
+  },
+  "provider": {
+    "capabilities": {
+      "masked-edit": true,
+      "ordered-references": false,
+      "ordinary-generation": true
+    },
+    "model": "gpt-image-2",
+    "name": "openai",
+    "quality": "high"
+  },
+  "references": [],
+  "slideId": "example-slide"
+}

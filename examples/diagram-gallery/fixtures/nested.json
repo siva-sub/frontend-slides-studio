@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "family": "hierarchy",
+  "type": "nested",
+  "id": "fixture-nested",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "rootId": "ecosystem",
+    "orientation": "vertical",
+    "items": [
+      {
+        "id": "ecosystem",
+        "label": "Ecosystem"
+      },
+      {
+        "id": "platform",
+        "label": "Platform"
+      },
+      {
+        "id": "product",
+        "label": "Product"
+      },
+      {
+        "id": "feature",
+        "label": "Feature"
+      }
+    ],
+    "parents": [
+      {
+        "id": "platform",
+        "parentId": "ecosystem"
+      },
+      {
+        "id": "product",
+        "parentId": "platform"
+      },
+      {
+        "id": "feature",
+        "parentId": "product"
+      }
+    ]
+  }
+}

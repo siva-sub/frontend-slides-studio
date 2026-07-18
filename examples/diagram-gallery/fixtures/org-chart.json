@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 2,
+  "family": "hierarchy",
+  "type": "org-chart",
+  "id": "fixture-org-chart",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "rootId": "ceo",
+    "orientation": "vertical",
+    "items": [
+      {
+        "id": "ceo",
+        "label": "CEO"
+      },
+      {
+        "id": "product",
+        "label": "Product"
+      },
+      {
+        "id": "technology",
+        "label": "Technology"
+      },
+      {
+        "id": "operations",
+        "label": "Operations"
+      },
+      {
+        "id": "design",
+        "label": "Design"
+      },
+      {
+        "id": "platform",
+        "label": "Platform"
+      }
+    ],
+    "parents": [
+      {
+        "id": "product",
+        "parentId": "ceo"
+      },
+      {
+        "id": "technology",
+        "parentId": "ceo"
+      },
+      {
+        "id": "operations",
+        "parentId": "ceo"
+      },
+      {
+        "id": "design",
+        "parentId": "product"
+      },
+      {
+        "id": "platform",
+        "parentId": "technology"
+      }
+    ]
+  }
+}

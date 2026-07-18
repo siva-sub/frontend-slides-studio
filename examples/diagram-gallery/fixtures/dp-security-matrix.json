@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 2,
+  "family": "matrix",
+  "type": "dp-security-matrix",
+  "id": "fixture-dp-security-matrix",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "rows": [
+      {
+        "id": "identity",
+        "label": "Identity"
+      },
+      {
+        "id": "data",
+        "label": "Data"
+      },
+      {
+        "id": "runtime",
+        "label": "Runtime"
+      }
+    ],
+    "columns": [
+      {
+        "id": "prevent",
+        "label": "Prevent"
+      },
+      {
+        "id": "detect",
+        "label": "Detect"
+      },
+      {
+        "id": "respond",
+        "label": "Respond"
+      }
+    ],
+    "cells": [
+      {
+        "rowId": "identity",
+        "columnId": "prevent",
+        "value": "Required · MFA"
+      },
+      {
+        "rowId": "identity",
+        "columnId": "detect",
+        "value": "Monitor sign-ins"
+      },
+      {
+        "rowId": "identity",
+        "columnId": "respond",
+        "value": "Revoke"
+      },
+      {
+        "rowId": "data",
+        "columnId": "prevent",
+        "value": "Required · encrypt"
+      },
+      {
+        "rowId": "data",
+        "columnId": "detect",
+        "value": "DLP"
+      },
+      {
+        "rowId": "data",
+        "columnId": "respond",
+        "value": "Quarantine"
+      },
+      {
+        "rowId": "runtime",
+        "columnId": "prevent",
+        "value": "Sandbox"
+      },
+      {
+        "rowId": "runtime",
+        "columnId": "detect",
+        "value": "Telemetry"
+      },
+      {
+        "rowId": "runtime",
+        "columnId": "respond",
+        "value": "Isolate"
+      }
+    ]
+  }
+}

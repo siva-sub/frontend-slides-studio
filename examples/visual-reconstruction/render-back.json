@@ -1,0 +1,11 @@
+{
+  "claimedPassed": false,
+  "evidence": [
+    "visual-master",
+    "clean-plate",
+    "layers",
+    "edge-check-white",
+    "edge-check-black"
+  ],
+  "status": "rendered_pending_manual_review"
+}

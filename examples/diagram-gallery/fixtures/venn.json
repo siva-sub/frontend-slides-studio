@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "family": "set-radial",
+  "type": "venn",
+  "id": "fixture-venn",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "sets": [
+      {
+        "id": "desirable",
+        "label": "Desirable"
+      },
+      {
+        "id": "viable",
+        "label": "Viable"
+      },
+      {
+        "id": "feasible",
+        "label": "Feasible"
+      }
+    ],
+    "segments": [
+      {
+        "id": "fit",
+        "setIds": [
+          "desirable",
+          "viable",
+          "feasible"
+        ],
+        "label": "Product fit"
+      }
+    ]
+  }
+}

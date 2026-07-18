@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 2,
+  "family": "graph-topology",
+  "type": "dp-integration",
+  "id": "fixture-dp-integration",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "nodes": [
+      {
+        "id": "product",
+        "label": "Product",
+        "kind": "input"
+      },
+      {
+        "id": "contract",
+        "label": "Contract"
+      },
+      {
+        "id": "adapter",
+        "label": "Adapter",
+        "kind": "focal"
+      },
+      {
+        "id": "partner",
+        "label": "Partner",
+        "kind": "external"
+      }
+    ],
+    "zones": [],
+    "connections": [
+      {
+        "id": "p1",
+        "source": "product",
+        "target": "contract",
+        "label": "intent"
+      },
+      {
+        "id": "p2",
+        "source": "contract",
+        "target": "adapter",
+        "label": "validate"
+      },
+      {
+        "id": "p3",
+        "source": "adapter",
+        "target": "partner",
+        "label": "deliver",
+        "kind": "link"
+      }
+    ]
+  }
+}

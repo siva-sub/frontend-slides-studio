@@ -1,0 +1,11 @@
+{
+  "name": "frontend-slides-studio",
+  "version": "0.1.0",
+  "description": "Local-first HTML presentation authoring, typed diagrams, measured motion, deterministic export, and optional visual-master slides.",
+  "skills": "./skills/",
+  "author": { "name": "siva-sub", "url": "https://github.com/siva-sub" },
+  "homepage": "https://github.com/siva-sub/frontend-slides-studio",
+  "repository": "https://github.com/siva-sub/frontend-slides-studio",
+  "license": "MIT",
+  "keywords": ["presentations", "slides", "html", "editor", "motion", "diagrams", "powerpoint"]
+}

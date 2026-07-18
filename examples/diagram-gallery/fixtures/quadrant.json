@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "family": "matrix",
+  "type": "quadrant",
+  "id": "fixture-quadrant",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "rows": [
+      {
+        "id": "low-confidence",
+        "label": "Lower confidence"
+      },
+      {
+        "id": "high-confidence",
+        "label": "Higher confidence"
+      }
+    ],
+    "columns": [
+      {
+        "id": "low-impact",
+        "label": "Lower impact"
+      },
+      {
+        "id": "high-impact",
+        "label": "Higher impact"
+      }
+    ],
+    "cells": [
+      {
+        "rowId": "low-confidence",
+        "columnId": "low-impact",
+        "label": "Monitor"
+      },
+      {
+        "rowId": "low-confidence",
+        "columnId": "high-impact",
+        "label": "Experiment"
+      },
+      {
+        "rowId": "high-confidence",
+        "columnId": "low-impact",
+        "label": "Maintain"
+      },
+      {
+        "rowId": "high-confidence",
+        "columnId": "high-impact",
+        "label": "Prioritize"
+      }
+    ]
+  }
+}

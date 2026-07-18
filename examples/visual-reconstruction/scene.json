@@ -1,0 +1,26 @@
+{
+  "canvas": {
+    "height": 36,
+    "width": 64
+  },
+  "clean_plate": "clean-plate.png",
+  "elements": [
+    {
+      "asset": "layers/subject.png",
+      "bbox_px": [
+        0,
+        0,
+        64,
+        36
+      ],
+      "id": "subject",
+      "layerRoute": "A1",
+      "type": "image_layer"
+    }
+  ],
+  "repair_mask": "repair-mask.png",
+  "reviewStatus": "rendered_pending_manual_review",
+  "schemaVersion": 1,
+  "slideId": "example-slide",
+  "visual_master": "visual-master.png"
+}

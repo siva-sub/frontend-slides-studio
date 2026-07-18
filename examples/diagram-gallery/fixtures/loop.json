@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "family": "set-radial",
+  "type": "loop",
+  "id": "fixture-loop",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "sets": [
+      {
+        "id": "observe",
+        "label": "Observe"
+      },
+      {
+        "id": "orient",
+        "label": "Orient"
+      },
+      {
+        "id": "decide",
+        "label": "Decide"
+      },
+      {
+        "id": "act",
+        "label": "Act"
+      }
+    ],
+    "segments": [
+      {
+        "id": "cycle",
+        "setIds": [
+          "observe",
+          "orient",
+          "decide",
+          "act"
+        ],
+        "label": "Learning loop"
+      }
+    ]
+  }
+}

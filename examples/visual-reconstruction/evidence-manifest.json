@@ -1,0 +1,142 @@
+{
+  "assets": {
+    "cleanPlate": "clean-plate.png",
+    "edgeCheckBlack": "edge-check-black.png",
+    "edgeCheckWhite": "edge-check-white.png",
+    "overlayTrace": "overlay-trace.png",
+    "repairMask": "repair-mask.png",
+    "visualMaster": "visual-master.png"
+  },
+  "canvas": {
+    "height": 36,
+    "width": 64
+  },
+  "claimedPassed": false,
+  "cleanPlateEvidence": {
+    "changedPixelsByLayer": {
+      "subject": 441
+    },
+    "requiredLayerPixels": 441,
+    "uncoveredLayerPixels": 0,
+    "verifiedSeparated": true
+  },
+  "dimensions": {
+    "cleanPlate": [
+      64,
+      36
+    ],
+    "visualMaster": [
+      64,
+      36
+    ]
+  },
+  "edgeChecks": {
+    "black": "edge-check-black.png",
+    "primaryLayer": "subject",
+    "white": "edge-check-white.png"
+  },
+  "hashes": {
+    "cleanPlate": "a03432f61424f2d05a5a5ac888948f45c216f16ae249b2fac6186dcd71494a82",
+    "prompts": {
+      "generation": "67ecd21ceb7dec5ebe38ce19ec3aa3ac2bbdf287c62ac1db7adf6940ded9a610",
+      "repair": "0d5c96d74e4ba0a467e747e843880b8f9dc8920ae4f5f807c92fe6390f478485"
+    },
+    "references": {},
+    "repairMask": "112cf225eebad19d52c0bdf57177dd55ff741db5e7608f85df81811f6416fe0f",
+    "visualMaster": "ae51fb3289294516f45fba022cf5119064abe52e4ed48565bdaaf832532db9aa"
+  },
+  "layers": [
+    {
+      "asset": "layers/subject.png",
+      "assetHash": "551ea60aa28155400fd6ad521dc3e8bed8d2573c147cac81649d819cb4e26753",
+      "design_mode": false,
+      "dimensions": [
+        64,
+        36
+      ],
+      "edgeCheck": {
+        "contaminated_pixels": 0,
+        "contamination_ratio": 0.0,
+        "footprint_pixels": 441,
+        "max_edge_difference": 0,
+        "total_pixels": 2304
+      },
+      "extraction": {
+        "method": "direct_rgba_extraction",
+        "regeneration_planned": false
+      },
+      "id": "subject",
+      "metrics": {
+        "edge_contamination": 0.01,
+        "mask_confidence": 0.96,
+        "occlusion_ratio": 0.05
+      },
+      "reason": "mask_confidence 0.96 >= 0.9, edge_contamination 0.01 <= 0.08, occlusion 0.05 <= 0.2; direct RGBA extraction",
+      "route": "A1",
+      "thresholds": {
+        "max_edge_contamination": 0.08,
+        "max_occlusion": 0.2,
+        "min_mask_confidence": 0.9
+      }
+    }
+  ],
+  "maskEvidence": {
+    "preservePixels": 1388,
+    "replacePixels": 916,
+    "totalPixels": 2304
+  },
+  "outsideChangeEvidence": {
+    "changedOutsideMask": 0,
+    "repairMask": "repair-mask.png"
+  },
+  "overlays": [
+    {
+      "alternatives": 2,
+      "attempts": 2,
+      "bbox": [
+        0.1,
+        0.1,
+        0.3,
+        0.3
+      ],
+      "blocked": false,
+      "selectedRect": [
+        0.6,
+        0.1,
+        0.3,
+        0.3
+      ],
+      "trace": "overlay-trace.png",
+      "traceRect": [
+        0.6,
+        0.1,
+        0.3,
+        0.3
+      ]
+    }
+  ],
+  "provider": {
+    "capabilities": {
+      "masked-edit": true,
+      "ordered-references": false,
+      "ordinary-generation": true
+    },
+    "model": "gpt-image-2",
+    "name": "openai",
+    "quality": "high"
+  },
+  "renderBack": {
+    "claimedPassed": false,
+    "evidence": [
+      "visual-master",
+      "clean-plate",
+      "layers",
+      "edge-check-white",
+      "edge-check-black"
+    ],
+    "status": "rendered_pending_manual_review"
+  },
+  "reviewStatus": "rendered_pending_manual_review",
+  "schemaVersion": 1,
+  "slideId": "example-slide"
+}

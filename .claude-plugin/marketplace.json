@@ -1,15 +1,22 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "frontend-slides",
-  "description": "Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files.",
+  "name": "frontend-slides-studio",
+  "description": "Create, import, edit, animate, diagram, validate, and export local-first HTML presentations.",
   "owner": {
-    "name": "zarazhangrui",
-    "url": "https://github.com/zarazhangrui"
+    "name": "siva-sub",
+    "url": "https://github.com/siva-sub"
   },
   "plugins": [
     {
+      "name": "frontend-slides-studio",
+      "description": "Local-first Studio, typed diagrams, measured motion, deterministic export, and optional visual-master slides.",
+      "source": "./plugins/frontend-slides-studio",
+      "category": "productivity",
+      "tags": ["presentations", "slides", "html", "editor", "motion", "diagrams", "powerpoint"]
+    },
+    {
       "name": "frontend-slides",
-      "description": "Zero-dependency HTML presentation generator with safe presets, bold template-library styles, PPT conversion, and anti-AI-slop design philosophy.",
+      "description": "Legacy-compatible zero-dependency HTML presentation generator preserved from upstream.",
       "source": "./plugins/frontend-slides",
       "category": "productivity",
       "tags": ["presentations", "slides", "html", "design", "powerpoint", "templates"]

@@ -1,0 +1,10 @@
+Frontend Slides Studio motion analyzer
+
+Adapted from Motiscope at commit 91300a0b1234a654907b795ce4d4d74a83f59651.
+Copyright (c) 2026 Kumar Sashank Ghanta. MIT licensed.
+
+Motiscope records technique lineage from:
+- claude-video, Copyright (c) 2025 Drew Breunig, MIT.
+- claude-video-vision, Copyright (c) 2025 Paul Shin, MIT.
+
+Modifications: reduced to a standard-library analyzer, introduced a versioned MotionAnalysis schema, made caveats explicit, and separated analysis from element intent/program mapping.

@@ -1,0 +1,33 @@
+{
+  "claimedPassed": false,
+  "cleanPlateSeparated": true,
+  "layers": [
+    {
+      "edgeCheck": {
+        "contaminated_pixels": 0,
+        "contamination_ratio": 0.0,
+        "footprint_pixels": 441,
+        "max_edge_difference": 0,
+        "total_pixels": 2304
+      },
+      "id": "subject",
+      "metrics": {
+        "edge_contamination": 0.01,
+        "mask_confidence": 0.96,
+        "occlusion_ratio": 0.05
+      },
+      "route": "A1"
+    }
+  ],
+  "outsideMaskChangedPixels": 0,
+  "overlays": [
+    {
+      "alternatives": 2,
+      "attempts": 2,
+      "blocked": false
+    }
+  ],
+  "renderBackStatus": "rendered_pending_manual_review",
+  "reviewStatus": "rendered_pending_manual_review",
+  "slideId": "example-slide"
+}

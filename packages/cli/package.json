@@ -1,0 +1,10 @@
+{
+  "name": "@slides-studio/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "slides-studio": "dist/index.js" },
+  "main": "dist/index.js",
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit", "test": "vitest run", "start": "tsx src/index.ts" },
+  "dependencies": { "@slides-studio/diagram-kit": "workspace:*", "@slides-studio/export": "workspace:*", "@slides-studio/layout-contracts": "workspace:*", "@slides-studio/media-kit": "workspace:*", "@slides-studio/protocol": "workspace:*", "@slides-studio/style-registry": "workspace:*", "linkedom": "^0.18.9" },
+  "devDependencies": { "@types/node": "^22.15.30", "tsx": "^4.19.4", "typescript": "^5.8.3", "vitest": "^3.2.3" }
+}

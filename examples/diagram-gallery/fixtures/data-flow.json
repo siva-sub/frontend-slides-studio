@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 2,
+  "family": "graph-topology",
+  "type": "data-flow",
+  "id": "fixture-data-flow",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "nodes": [
+      {
+        "id": "source",
+        "label": "Sources",
+        "kind": "input"
+      },
+      {
+        "id": "ingest",
+        "label": "Ingest"
+      },
+      {
+        "id": "shape",
+        "label": "Transform"
+      },
+      {
+        "id": "warehouse",
+        "label": "Warehouse",
+        "kind": "store"
+      },
+      {
+        "id": "insight",
+        "label": "Insight",
+        "kind": "focal"
+      }
+    ],
+    "zones": [],
+    "connections": [
+      {
+        "id": "d1",
+        "source": "source",
+        "target": "ingest"
+      },
+      {
+        "id": "d2",
+        "source": "ingest",
+        "target": "shape",
+        "kind": "async"
+      },
+      {
+        "id": "d3",
+        "source": "shape",
+        "target": "warehouse"
+      },
+      {
+        "id": "d4",
+        "source": "warehouse",
+        "target": "insight",
+        "kind": "accent"
+      }
+    ]
+  }
+}

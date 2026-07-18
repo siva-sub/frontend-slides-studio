@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 2,
+  "family": "graph-topology",
+  "type": "it-state",
+  "id": "fixture-it-state",
+  "variant": "editorial",
+  "direction": "ltr",
+  "theme": {
+    "paper": "#f5f5f2",
+    "paper2": "#ffffff",
+    "ink": "#20231f",
+    "muted": "#6f756d",
+    "rule": "#d8dbd4",
+    "accent": "#f05a36",
+    "accentTint": "#fde8e1",
+    "link": "#315f9d",
+    "titleFont": "Fraunces",
+    "bodyFont": "Manrope",
+    "monoFont": "IBM Plex Mono"
+  },
+  "data": {
+    "nodes": [
+      {
+        "id": "legacy-ui",
+        "label": "Legacy UI",
+        "zoneId": "current"
+      },
+      {
+        "id": "manual-export",
+        "label": "Manual export",
+        "zoneId": "current"
+      },
+      {
+        "id": "studio-ui",
+        "label": "Studio",
+        "kind": "focal",
+        "zoneId": "target"
+      },
+      {
+        "id": "gated-export",
+        "label": "Gated export",
+        "zoneId": "target"
+      }
+    ],
+    "zones": [
+      {
+        "id": "current",
+        "label": "Current"
+      },
+      {
+        "id": "target",
+        "label": "Target"
+      }
+    ],
+    "connections": [
+      {
+        "id": "i1",
+        "source": "legacy-ui",
+        "target": "studio-ui",
+        "label": "modernize",
+        "kind": "accent"
+      },
+      {
+        "id": "i2",
+        "source": "manual-export",
+        "target": "gated-export",
+        "label": "automate",
+        "kind": "accent"
+      }
+    ]
+  }
+}

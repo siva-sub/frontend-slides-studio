@@ -1,0 +1,93 @@
+import { spawn } from "node:child_process";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { createServer } from "node:net";
+import { chromium } from "playwright";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const studioDist = resolve(here, "../../studio/dist");
+const tempRoot = await mkdtemp(join(tmpdir(), "slides-studio-editor-smoke-"));
+const sourcePath = join(tempRoot, "intrinsic-1280.html");
+const source1920Path = join(tempRoot, "intrinsic-1920.html");
+const mediaPath = join(tempRoot, "replacement.svg");
+const screenshotPath = join(tmpdir(), "frontend-slides-studio-editor-smoke.png");
+const source = `<!doctype html><html><head><style>html,body{margin:0;width:100%;height:100%;overflow:hidden}.deck-stage{position:absolute;width:1280px;height:720px;background:#fffcf4}.slide{position:absolute;inset:0;width:1280px;height:720px}.slide h1{position:absolute;left:80px;top:80px;margin:0;font:700 80px sans-serif}.marker{position:absolute;right:0;bottom:0;width:80px;height:80px;background:#f05a36}</style></head><body><main class="deck-stage"><section class="slide active visible"><h1>Editable object</h1><img alt="replaceable" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Crect width='20' height='20' fill='blue'/%3E%3C/svg%3E" style="position:absolute;left:80px;bottom:80px;width:80px;height:80px"><div class="marker"></div></section></main></body></html>`;
+await writeFile(sourcePath, source);
+await writeFile(source1920Path, source.replaceAll("1280px", "1920px").replaceAll("720px", "1080px").replace("Editable object", "1920 canvas"));
+await writeFile(mediaPath, '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="18" fill="#f05a36"/></svg>');
+
+const reservePort = () => new Promise((resolvePort, reject) => {
+  const server = createServer();
+  server.once("error", reject);
+  server.listen(0, "127.0.0.1", () => { const address = server.address(); const port = typeof address === "object" && address ? address.port : 0; server.close(() => resolvePort(port)); });
+});
+const port = await reservePort();
+const server = spawn("python3", ["-m", "http.server", String(port), "--bind", "127.0.0.1", "--directory", studioDist], { stdio: "ignore" });
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const assertPreviewBounds = async (page, frame) => { const iframe = await page.locator("iframe").boundingBox(); const stage = await frame.locator(".deck-stage").boundingBox(); assert(iframe && stage, "Preview or stage bounds are missing"); assert(Math.abs(stage.width / stage.height - 16 / 9) < 0.001, "Preview stage is not 16:9"); assert(stage.width <= iframe.width + 1 && stage.height <= iframe.height + 1, "Preview stage overflows its iframe"); assert(Math.abs((stage.x + stage.width / 2) - (iframe.x + iframe.width / 2)) < 1, "Preview stage is not horizontally centered"); };
+let browser;
+try {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    try { const response = await fetch(`http://127.0.0.1:${port}`); if (response.ok) break; } catch {}
+    await new Promise((resolveWait) => setTimeout(resolveWait, 100));
+    if (attempt === 39) throw new Error("Studio static server did not start");
+  }
+  browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
+  await page.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
+  await page.locator('input[accept^=".html"]').setInputFiles(sourcePath);
+  assert(await page.locator("#style-profile option").count() === 32, "Studio style registry is incomplete");
+  assert(await page.locator("#recipe-profile option").count() === 6, "Studio recipe registry is incomplete");
+  await page.locator("#recipe-profile").selectOption({ index: 1 });
+  await page.locator("#style-profile").selectOption({ index: 2 });
+  assert(await page.locator("#layout-profile option").count() > 0, "Selected style exposes no compatible layouts");
+  await page.locator(".mode-switch").getByRole("button", { name: /^move/i }).click();
+  let frame = page.frames().find((candidate) => candidate !== page.mainFrame());
+  assert(frame, "Studio preview iframe was not created"); await assertPreviewBounds(page, frame);
+  await page.getByRole("button", { name: "Run page audit" }).click();
+  await page.locator(".quality-status.passed").waitFor({ timeout: 10_000 });
+  assert((await page.locator(".quality-status").textContent())?.includes("PASS"), "Studio rendered audit did not pass the clean page");
+  const diagramSpec = { schemaVersion: 1, id: "studio-flow", type: "architecture", variant: "light", direction: "ltr", theme: { paper: "#f5f5f2", paper2: "#fff", ink: "#20231f", muted: "#6f756d", rule: "#d8dbd4", accent: "#f05a36", accentTint: "#fde8e1", link: "#315f9d", titleFont: "Fraunces", bodyFont: "Manrope", monoFont: "IBM Plex Mono" }, nodes: [{ id: "a", label: "Input", kind: "step" }, { id: "b", label: "Output", kind: "store" }], edges: [{ id: "a-b", source: "a", target: "b", kind: "link" }] };
+  await page.locator("#diagram-json").fill(JSON.stringify(diagramSpec));
+  await page.getByRole("button", { name: "Insert validated diagram" }).click();
+  await page.locator(".diagram-panel").filter({ hasText: "Inserted architecture" }).waitFor({ timeout: 10_000 });
+  frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame, "Preview disappeared after diagram insertion");
+  await frame.locator('[data-object-id="diagram-studio-flow"]').waitFor();
+  await page.getByRole("button", { name: "Run page audit" }).click();
+  await page.locator(".quality-panel li button").first().waitFor({ timeout: 10_000 });
+  await page.locator(".quality-panel li button").first().click();
+  await frame.locator("#slides-studio-quality-focus").waitFor({ timeout: 5_000 });
+  await page.getByRole("button", { name: "Undo" }).click(); await page.waitForTimeout(150);
+  frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame, "Preview disappeared after diagram undo");
+  await frame.waitForFunction(() => !document.querySelector('[data-object-id="diagram-studio-flow"]'));
+  await page.locator("#page-transition-kind").selectOption("slide");
+  await frame.waitForFunction(() => document.querySelector('script[data-transition-spec]')?.textContent?.includes('"kind":"slide"'));
+  await page.getByRole("button", { name: "Undo" }).click(); await page.waitForTimeout(120);
+  frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame, "Preview disappeared after transition undo");
+  await frame.waitForFunction(() => !document.querySelector('script[data-transition-spec]'));
+  let object = frame.locator("h1"); await object.click();
+  await page.locator("#motion-preset").selectOption("blur");
+  await page.getByRole("button", { name: "Apply motion" }).click();
+  await frame.waitForFunction(() => document.querySelector('script[data-motion-program]')?.textContent?.includes('"filter":"blur(18px)"'));
+  await page.getByRole("button", { name: "Undo" }).click(); await page.waitForTimeout(120);
+  frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame, "Preview disappeared after motion undo");
+  await frame.waitForFunction(() => !document.querySelector('script[data-motion-program]'));
+  object = frame.locator("h1"); await object.click();
+  assert(await frame.locator("#slides-studio-selection-overlay").isVisible(), "Selection overlay did not appear");
+  let box = await object.boundingBox(); assert(box, "Selected object has no bounds");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + 47, box.y + box.height / 2 + 23, { steps: 5 }); await page.mouse.up();
+  assert((await object.evaluate((element) => element.style.translate)).length > 0, "Move did not commit CSS translate");
+  const handle = frame.locator('[data-resize-handle="se"]'); box = await handle.boundingBox(); assert(box, "Resize handle has no bounds");
+  await page.mouse.move(box.x + 5, box.y + 5); await page.mouse.down(); await page.mouse.move(box.x + 85, box.y + 45, { steps: 5 }); await page.mouse.up();
+  const resized = await object.evaluate((element) => ({ width: element.style.width, height: element.style.height })); assert(resized.width && resized.height, "Resize did not commit width and height");
+  await page.getByRole("button", { name: "Delete object" }).click(); await page.waitForTimeout(100); assert(await frame.locator("h1").count() === 0, "Selected object was not deleted");
+  await page.getByRole("button", { name: "Undo" }).click(); await page.waitForTimeout(150); frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame && await frame.locator("h1").count() === 1, "Undo did not restore the deleted object");
+  await frame.locator("img").click(); await page.waitForTimeout(100); await page.locator('input[accept^="image/"]').setInputFiles(mediaPath); await frame.waitForFunction(() => document.querySelector("img")?.getAttribute("data-asset-sha256")?.length === 64, undefined, { timeout: 5000 }); assert((await frame.locator("img").getAttribute("data-asset-sha256"))?.length === 64, "Media replacement did not record a content hash");
+  await page.locator('input[accept^=".html"]').setInputFiles(source1920Path); await page.waitForTimeout(100); frame = page.frames().find((candidate) => candidate !== page.mainFrame()); assert(frame, "1920 preview iframe was not created"); await assertPreviewBounds(page, frame);
+  await page.screenshot({ path: screenshotPath });
+  console.log(JSON.stringify({ ok: true, screenshotPath, resized }));
+} finally {
+  await browser?.close(); server.kill("SIGTERM"); await rm(tempRoot, { recursive: true, force: true });
+}
