@@ -1,0 +1,785 @@
+{
+  "schemaVersion": 1,
+  "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+  "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+  "license": "Apache-2.0",
+  "importPolicy": "Resources imported byte-for-byte from the upstream Apache-2.0 source at the pinned commit. No upstream screenshots, gallery binaries, or other files are imported. Registry normalization and generated metadata are original work stored outside this subtree.",
+  "counts": {
+    "styleMarkdown": 32,
+    "styleLayoutsJson": 32,
+    "recipes": 6,
+    "layoutsTotal": 256
+  },
+  "entries": [
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/abstract-art-showcase.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/abstract-art-showcase.layouts.json",
+      "sha256": "fc139dbb9dea527f02f8a9ba40f78165669130ebbc2573527230efa6019b3148",
+      "sizeBytes": 14352,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/abstract-art-showcase.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/abstract-art-showcase.md",
+      "sha256": "eb9b71af89157717033d6468116f83c05ca6af53805efcbb651f000477e12193",
+      "sizeBytes": 5535,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/clean-tech-blue.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/clean-tech-blue.layouts.json",
+      "sha256": "0cfec65f78a520688e2ebbd42855937eee8ee8f7a8f5abe54db9f9a9915d5738",
+      "sizeBytes": 14336,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/clean-tech-blue.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/clean-tech-blue.md",
+      "sha256": "8622ceef81cedb24505ce23e43f4de0501454a7c48031af33bd21a551b8a3422",
+      "sizeBytes": 2862,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/coal-industry-business-company-profile.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/coal-industry-business-company-profile.layouts.json",
+      "sha256": "0b18cf8fbf7e5c55466c8c4e82430a0ed80f31bb3f0c0d9f1dd122debbb188d7",
+      "sizeBytes": 14083,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/coal-industry-business-company-profile.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/coal-industry-business-company-profile.md",
+      "sha256": "d981bc0786071f70422fb34c6694e0099fd0ba2309a3d46c222c2e14af30d845",
+      "sizeBytes": 4608,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/college-candy-aesthetics-infographics.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/college-candy-aesthetics-infographics.layouts.json",
+      "sha256": "03546034facf80717195c1f1ea964898f38f2088c569f7f617f0a8217c01cc16",
+      "sizeBytes": 14179,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/college-candy-aesthetics-infographics.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/college-candy-aesthetics-infographics.md",
+      "sha256": "9fb38de7c31096be8e935403df51b75e85d72b38eb624c2c5e195e161e67fb4d",
+      "sizeBytes": 5238,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/creative-agency.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/creative-agency.layouts.json",
+      "sha256": "c7ca30c205f69430c5fc9b34c5f5a946b993ca1da37cd09aba1128641bfd1183",
+      "sizeBytes": 13900,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/creative-agency.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/creative-agency.md",
+      "sha256": "f1ae26af0f33453298ca0c3b362e9022b7b54ff721f1bff184a71225ce0bf501",
+      "sizeBytes": 4557,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/culinary-innovation.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/culinary-innovation.layouts.json",
+      "sha256": "bc9d1e7c22b44b5c35cebd527859f0655062df5e452701bfc6ee3855f344749d",
+      "sizeBytes": 14450,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/culinary-innovation.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/culinary-innovation.md",
+      "sha256": "23df2ec09689dfcd76b33fca1f5ff3a87cb834d408c336bbe655abbe1dd0de21",
+      "sizeBytes": 6000,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/dark-aurora.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/dark-aurora.layouts.json",
+      "sha256": "ecd52b8bcd367826043fd7cb9923a2f29487f2b96229e5e44ee25ab58a2aeeb0",
+      "sizeBytes": 14215,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/dark-aurora.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/dark-aurora.md",
+      "sha256": "ac5eeb18b8d68bb8ab2b451d5eeba8619199c54c7541d30f8f9ff62bf8880293",
+      "sizeBytes": 2903,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/data-science-consulting.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/data-science-consulting.layouts.json",
+      "sha256": "5a23678fe35cd732d0e47f67803655a1f99f2e16b86a7a675efe4c8284acdaf8",
+      "sizeBytes": 13713,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/data-science-consulting.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/data-science-consulting.md",
+      "sha256": "7bae1d18cbbc1031b546984f4561ff08b1d4f9faa96e5883b13adc2336893508",
+      "sizeBytes": 4081,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/eco-green-business-plan.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/eco-green-business-plan.layouts.json",
+      "sha256": "76a5fe6400c825560c4466d330cf4962567371446f77faa8e7c12fe2916c903f",
+      "sizeBytes": 11798,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/eco-green-business-plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/eco-green-business-plan.md",
+      "sha256": "25d4f2a42b3d6b72615e17558ee0357492acc32fff83e313c6606c466f31c818",
+      "sizeBytes": 6572,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/economic-impact-of-coronavirus.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/economic-impact-of-coronavirus.layouts.json",
+      "sha256": "dbab53a16290f0558a1c0e5cd8e69ac0006c99e46c1dcc4111660ddff2892541",
+      "sizeBytes": 13779,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/economic-impact-of-coronavirus.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/economic-impact-of-coronavirus.md",
+      "sha256": "8e2d608d3c7935859d3418147b36ee34a3212ccb01a5734fd011c0be8cf6ea24",
+      "sizeBytes": 4459,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/editorial-mono.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/editorial-mono.layouts.json",
+      "sha256": "efb0a34b6e04774d45d7da734f73d3bc7e30b13ff9ea442bb6f69d7c67000b97",
+      "sizeBytes": 14495,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/editorial-mono.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/editorial-mono.md",
+      "sha256": "036dab233860042832ae9b7d788f2c9fc05dd8ff94915cb97528669b9b552cd7",
+      "sizeBytes": 2828,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/fashion-business-consulting-toolkit-aesthetic.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/fashion-business-consulting-toolkit-aesthetic.layouts.json",
+      "sha256": "87074e4e4a6cbf680d6250b9bb207fe0a538442c172481c09e58eaf4844c0727",
+      "sizeBytes": 14090,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/fashion-business-consulting-toolkit-aesthetic.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/fashion-business-consulting-toolkit-aesthetic.md",
+      "sha256": "2700acfd41f88e0d99f0ec3169d3e19efeec6d00b78bffb7896874e8f5b1f138",
+      "sizeBytes": 4896,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/final-year-project-thesis-defense.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/final-year-project-thesis-defense.layouts.json",
+      "sha256": "e9007da2f6b313a2f4799d587802b48b005e1c05b786351ad0c16452e5ba0dc1",
+      "sizeBytes": 13994,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/final-year-project-thesis-defense.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/final-year-project-thesis-defense.md",
+      "sha256": "ba8c0fc2c1c4c21637ad52b2966e0e31b56e535a3c46e0f364132fa5c0090af5",
+      "sizeBytes": 4353,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/first-impressions.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/first-impressions.layouts.json",
+      "sha256": "d3d17cf75388175d3a9d6756a17b22efca436ca24c3e00f0441070777ac4cbe6",
+      "sizeBytes": 14251,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/first-impressions.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/first-impressions.md",
+      "sha256": "7cd95323cf1d282c394ccfa3d57143934bd1c0793c4f66edf6905cd9535e2bf6",
+      "sizeBytes": 5475,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/flowery.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/flowery.layouts.json",
+      "sha256": "15b6f7620680d594480f35d85b9d8d7d590dca6bbee6ade0ce579227918ee1ef",
+      "sizeBytes": 14617,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/flowery.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/flowery.md",
+      "sha256": "1595c3cf7cfb0a692d9fc23ae978d1c7e10ca60b2c87595cf50a487dbf02651b",
+      "sizeBytes": 6230,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/formal-lavender-portfolio.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/formal-lavender-portfolio.layouts.json",
+      "sha256": "28dd5c022ea07fbdd91f4c77b25891f40436a964f3c59365ce0944a026cb76ab",
+      "sizeBytes": 14241,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/formal-lavender-portfolio.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/formal-lavender-portfolio.md",
+      "sha256": "a3ea64e18546d923dff010bfcd4a450c44c5bcb7fce51290907aa15570442c47",
+      "sizeBytes": 4915,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-business.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-business.layouts.json",
+      "sha256": "40db4f402f4734d4f7280b350ef6e5dd587c3edef64188a2c4e17b5b680cf5f1",
+      "sizeBytes": 14219,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-business.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-business.md",
+      "sha256": "3a9b3146fc3889a8600569f6a46e638e82509ad67c61ec97f1b2024596b9ca48",
+      "sizeBytes": 5042,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-clinical-case.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-clinical-case.layouts.json",
+      "sha256": "91cbad35e8145b3499f78748416d7c7910963e81691ca8446aa9b0a77124739b",
+      "sizeBytes": 13999,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-clinical-case.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-clinical-case.md",
+      "sha256": "a83475b69730a37014f76bf3786c746ee7912a2ff5617a39b3ab03442712e3f3",
+      "sizeBytes": 4658,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-duotone-thesis.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-duotone-thesis.layouts.json",
+      "sha256": "48b8565918771ddf48921c2dcfce85eca4e699b7899264094c029667eddcf6f2",
+      "sizeBytes": 14397,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/geometric-duotone-thesis.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/geometric-duotone-thesis.md",
+      "sha256": "ae12f12fad08f724a908b3899d43e76b9553d18a53b34096ef63a0f934893b6a",
+      "sizeBytes": 5711,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/gradient-glass.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/gradient-glass.layouts.json",
+      "sha256": "d9cc20ea3149c136a5c9ea5d2b659c5631bec02ee15e0a6c76aa3ccff1fd35df",
+      "sizeBytes": 13996,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/gradient-glass.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/gradient-glass.md",
+      "sha256": "eebe5a1da33017218f7957a56b479a3d8b33b0b38c4fb054fb9edaa94e0a4440",
+      "sizeBytes": 2576,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/hand-sketch.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/hand-sketch.layouts.json",
+      "sha256": "46832b210e64c03eb355d639d35c242608c00c29ad80175d9dd274188a393ba1",
+      "sizeBytes": 14449,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/hand-sketch.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/hand-sketch.md",
+      "sha256": "cc904a7f8589b82665e7215bcf0a741f3cf1a5849c52036c7e30e9df360cabb9",
+      "sizeBytes": 2948,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/health-disparities-and-social-determinants-of-health-doctor-of-philosophy-phd-in-health-behavior-and-health-education.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/health-disparities-and-social-determinants-of-health-doctor-of-philosophy-phd-in-health-behavior-and-health-education.layouts.json",
+      "sha256": "9f7e0f1e9786ffc375eb44e99779cfc5a86cd3ede236ec15430db2c88098b5a5",
+      "sizeBytes": 14736,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/health-disparities-and-social-determinants-of-health-doctor-of-philosophy-phd-in-health-behavior-and-health-education.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/health-disparities-and-social-determinants-of-health-doctor-of-philosophy-phd-in-health-behavior-and-health-education.md",
+      "sha256": "650e661cbdfc283ee523e720f8c3a7efe124194d603fc8f4ca528d6bca61b2e3",
+      "sizeBytes": 5825,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/indigenous-cultures.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/indigenous-cultures.layouts.json",
+      "sha256": "67031ed54530b761cd600fba6123b74f105a209c593bee13fe4bd0760cd0bd40",
+      "sizeBytes": 14396,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/indigenous-cultures.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/indigenous-cultures.md",
+      "sha256": "e1ca61079392d636b444650a7516f52a1c10e10cc9702b2e58607bf0a417d45b",
+      "sizeBytes": 5456,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/investment-company-business-plan.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/investment-company-business-plan.layouts.json",
+      "sha256": "44ada36c9aa76ebebc4f3700ed03aec709d5b1e3b1fbc3512b5766f66183a8fe",
+      "sizeBytes": 14245,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/investment-company-business-plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/investment-company-business-plan.md",
+      "sha256": "192f2c805e7fdcce9e5eb228a6d191fe088024d2414028947a90e48523b18989",
+      "sizeBytes": 5001,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/japanese-wabi.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/japanese-wabi.layouts.json",
+      "sha256": "cdc7fc7a69f6b094e32595054d8c653238612c85b2964887fb160fe7656475cc",
+      "sizeBytes": 14346,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/japanese-wabi.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/japanese-wabi.md",
+      "sha256": "559b5e7775efa212945221ff149ea18b3e4cc2d7f4e6f9603850aba1a6207652",
+      "sizeBytes": 2844,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/meeting-agenda.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/meeting-agenda.layouts.json",
+      "sha256": "3febb8ab6c9441ea335391f5873b3240616e9ab7f743751b8d0d3edae126db19",
+      "sizeBytes": 14130,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/meeting-agenda.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/meeting-agenda.md",
+      "sha256": "9ff4c08e2e61747ed13c3d8f1a5169e94d6d85fdcd33007d54442231a693a0a8",
+      "sizeBytes": 5649,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/mind-maps-workshop-professional.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/mind-maps-workshop-professional.layouts.json",
+      "sha256": "702cc82e5bdfccae00d79cb2415ec3a86f37d75cb44f5915f116dbb6e8360e15",
+      "sizeBytes": 13982,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/mind-maps-workshop-professional.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/mind-maps-workshop-professional.md",
+      "sha256": "eda4c653a0e2ee3716ddecf24940d7adb5138842e1f48067d20f618eacbd1886",
+      "sizeBytes": 4592,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/mindfulness-in-the-classroom-breathing-techniques.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/mindfulness-in-the-classroom-breathing-techniques.layouts.json",
+      "sha256": "e7923bc580ac7d0f89e53ed399bd1792745eaf0b5a78be1c0f656ae813fccebf",
+      "sizeBytes": 13836,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/mindfulness-in-the-classroom-breathing-techniques.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/mindfulness-in-the-classroom-breathing-techniques.md",
+      "sha256": "0dc2fcad6acbf21804d9921cae0a858e169ded413c15f083c0ed6b8aa4ed43fe",
+      "sizeBytes": 3971,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/risograph.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/risograph.layouts.json",
+      "sha256": "d19056320a15efc968e446f0e8b27fcc918d38e7418db0ca6d22d17e1294d164",
+      "sizeBytes": 14397,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/risograph.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/risograph.md",
+      "sha256": "e53f61e1482344b296202bb447fc3a811a015bbbdc6dac41ad9a7596ce93cc3a",
+      "sizeBytes": 2972,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/swiss-grid.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/swiss-grid.layouts.json",
+      "sha256": "ea40adb4788c9e51b431ee73f8e358be18a78f61933cd677922c21ea491121f9",
+      "sizeBytes": 14296,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/swiss-grid.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/swiss-grid.md",
+      "sha256": "0446f7d52d2f0ad55a7413c602baee3a5174d490be4042f2298f658f74b0dd21",
+      "sizeBytes": 2776,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/vector-illustration.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/vector-illustration.layouts.json",
+      "sha256": "bfc09a09ec9ddeadc8cfc1ce38d0c30a249b3785f733a8b54e3d4cea9f583ffe",
+      "sizeBytes": 14466,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/vector-illustration.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/vector-illustration.md",
+      "sha256": "45f6d077099b1babaaf0dcec943dc93319ade95e0ec3997ef7815497ce22192a",
+      "sizeBytes": 2724,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/y2k-chrome.layouts.json",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/y2k-chrome.layouts.json",
+      "sha256": "ec3f81a0100e8e501cfefcd1a40e11e5fd695599330915221a93a5c2a2ac0e3a",
+      "sizeBytes": 14231,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "styles/y2k-chrome.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/styles/y2k-chrome.md",
+      "sha256": "2433d8f075e2c5b297c201a0a0b9347f51635e9f7894d3e5092ce3b62f4817a5",
+      "sizeBytes": 2950,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/book-sharing/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/book-sharing/recipe.md",
+      "sha256": "c7c57ac11c2b2bc364d13cdbc815e680e35a976d8cec6bde0b7e3905ac28200a",
+      "sizeBytes": 779,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/book-sharing/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/book-sharing/slides_plan.md",
+      "sha256": "633c449f4da639ae905d61dbca7f00e1255656454c0aea9ed465c06142186d70",
+      "sizeBytes": 1787,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/courseware/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/courseware/recipe.md",
+      "sha256": "57a29d70f4c2edbea793555e4809f68c6983a50728a8fde52f4cf8c443928e79",
+      "sizeBytes": 717,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/courseware/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/courseware/slides_plan.md",
+      "sha256": "3e37f75100655812094b0fbb3268a70233fd4ff054176d11d95dc0baf0122f21",
+      "sizeBytes": 2031,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/investor-pitch/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/investor-pitch/recipe.md",
+      "sha256": "59df833e8066f51ab097036c21ea31eda47b1cf2f28745dd2c7bd7ae8d9c835d",
+      "sizeBytes": 795,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/investor-pitch/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/investor-pitch/slides_plan.md",
+      "sha256": "f8f27396780eabe480e12806d3a71b74a912259fa2ce8c33e4c51b82d3d0d4b3",
+      "sizeBytes": 2510,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/product-launch/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/product-launch/recipe.md",
+      "sha256": "b31f37dc465f47bf6095a33b191c2246d08c6a37e4e576a7081f5b5fe81f0359",
+      "sizeBytes": 833,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/product-launch/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/product-launch/slides_plan.md",
+      "sha256": "156aec471d774d6233d8cb652bae5d1b18284ab2d6d3d41ee0cb555e1956284c",
+      "sizeBytes": 1807,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/thesis-defense/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/thesis-defense/recipe.md",
+      "sha256": "f9fb7351c7f680ca369560a3361018e6aa01f86253134ba5c8a810de3b24e8a6",
+      "sizeBytes": 797,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/thesis-defense/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/thesis-defense/slides_plan.md",
+      "sha256": "bb849b91558c653a40cbc706155514ee05af6fafce87174fa47ce06c1cfeeea2",
+      "sizeBytes": 2437,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/weekly-report/recipe.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/weekly-report/recipe.md",
+      "sha256": "73475307964371c8fc5a4496e6f360195def6c7589bf3da31b646821f80f9f9c",
+      "sizeBytes": 762,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "examples/weekly-report/slides_plan.md",
+      "targetPath": "resources/gpt-image2-ppt-skills/recipes/weekly-report/slides_plan.md",
+      "sha256": "687bfa715bcae71d558c96ec2c3543c0f718b48b098231e11a6b73142a8654e9",
+      "sizeBytes": 1640,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    },
+    {
+      "sourceRepository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "sourceCommit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "upstreamPath": "LICENSE",
+      "targetPath": "resources/gpt-image2-ppt-skills/LICENSE",
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+      "sizeBytes": 11357,
+      "license": "Apache-2.0",
+      "modificationStatus": "unchanged"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "project": "siva-sub/frontend-slides-studio",
+  "sources": [
+    {
+      "repository": "https://github.com/zarazhangrui/frontend-slides",
+      "commit": "9906a34d640d2111f724544cbc50f7f130569ae1",
+      "license": "MIT",
+      "relationship": "fork",
+      "paths": ["repository history", "SKILL.md", "viewport-base.css", "scripts/"],
+      "modifications": "Renamed fork extended into a local-first presentation platform."
+    },
+    {
+      "repository": "https://github.com/Trade-Offf/NextPPT",
+      "commit": "75accc78857aeab420204831b4e15b24eed8d6d4",
+      "license": "MIT",
+      "relationship": "behavioral adaptation",
+      "paths": ["packages/protocol", "apps/studio/src/lib/normalizeDeck.ts"],
+      "modifications": "Contracts and normalization were independently rewritten for this repository."
+    },
+    {
+      "repository": "https://github.com/KumarSashank/motiscope",
+      "commit": "91300a0b1234a654907b795ce4d4d74a83f59651",
+      "license": "MIT",
+      "relationship": "adapted implementation",
+      "paths": ["motion/"],
+      "modifications": "Reduced to a stable CLI/library boundary and a versioned MotionAnalysis output."
+    },
+    {
+      "repository": "https://github.com/cathrynlavery/diagram-design",
+      "commit": "a157f7616473d966d6f433cf0b4d4f1880603504",
+      "license": "MIT",
+      "relationship": "typed reimplementation",
+      "paths": ["packages/diagram-kit"],
+      "modifications": "Converted manual SVG guidance into a typed graph renderer and validator."
+    },
+    {
+      "repository": "https://github.com/JuneYaooo/gpt-image2-ppt-skills",
+      "commit": "ce4714225d938b02806af3660a46e62be8900e29",
+      "license": "Apache-2.0",
+      "relationship": "adapted implementation",
+      "paths": ["visual/", "resources/gpt-image2-ppt-skills/"],
+      "modifications": "Ported scene, mask, asset-slot, and provider boundaries under visual/, extended with letterbox-safe prepare/restore edits, the A1/A2/B layer-route contract (validated metrics, masked A2 composite, default overlap grouping), deterministic white/black edge-contamination checks, protected-region placement, a contained evidence-bundle builder, and the non-network visual CLI -- all original work in this repository adapting the upstream technique, with no upstream binary copied. Imported the style prompt library and example recipes byte-for-byte under resources/gpt-image2-ppt-skills/ (32 styles/*.md + 32 *.layouts.json = 256 layouts, six recipes/*/recipe.md + slides_plan.md, and the upstream LICENSE), recorded in resources/gpt-image2-ppt-skills/MANIFEST.json. examples/visual-reconstruction/ is an original synthetic reconstruction example inspired by the upstream Apache technique. Normalization into the typed StyleProfile/LayoutProfile/Recipe registry contracts and generated metadata is original work in packages/style-registry."
+    },
+    {
+      "repository": "https://github.com/chuspeeism/dashi-ppt-skill",
+      "commit": "fdbb145517ea0e289000aef9b7906bcb3e0cd19a",
+      "license": "AGPL-3.0 plus proprietary exporter restrictions",
+      "relationship": "clean-room inspiration only",
+      "paths": [],
+      "modifications": "No code or assets copied."
+    }
+  ]
+}
