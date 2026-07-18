@@ -14,7 +14,7 @@
     "typecheck": "pnpm -r --if-present build && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test && python3 -m unittest discover -s visual/tests -p 'test_*.py' && python3 -m unittest discover -s motion/test -p 'test_*.py'",
     "check": "pnpm check:registry-generated && pnpm check:diagram-gallery && pnpm typecheck && pnpm test && pnpm check:provenance && pnpm check:clean-room && pnpm check:integrations && pnpm check:legacy-drift",
-    "check:registry-generated": "pnpm --filter @slides-studio/style-registry check:generated",
+    "check:registry-generated": "pnpm --filter @slides-studio/protocol build && pnpm --filter @slides-studio/style-registry check:generated",
     "check:diagram-gallery": "pnpm --filter @slides-studio/diagram-kit check:gallery",
     "check:provenance": "tsx scripts/check-provenance.ts",
     "check:clean-room": "tsx scripts/check-clean-room.ts && tsx scripts/check-clean-room.test.ts",
