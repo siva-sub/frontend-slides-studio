@@ -13,7 +13,7 @@
 6. Export PDF only after the runtime enters settled state: finish entrances, pause loops at poster progress 0.5 unless overridden, seek media, wait boundedly for fonts/images, and hide chrome. Use `pnpm cli -- export --format pdf --quality-gate strict --wait`.
 7. Raster PPTX is one frozen slide image per page and must be labeled non-editable. Use `--format pptx`.
 8. Editable PPTX must include native/fallback counts, fallback reasons, crop metadata, quality evidence, and motion limitations. Use `pnpm cli -- export --format editable-pptx --quality-gate strict --wait` for a saved HTML deck. The advanced graph path remains `pnpm cli -- pptx editable --graph ... --quality-report ... --output ...`.
-9. Both PPTX modes must carry successful ISO/IEC 29500 Transitional package-validation evidence. This check verifies the Open XML package, required parts, internal relationships, content types, and CRCs.
+9. Both PPTX modes must carry evidence that package validation confirmed ISO/IEC 29500 Transitional compatibility. This check verifies the Open XML package, required parts, internal relationships, content types, and CRCs.
 10. If no render backend exists, editable status is `unverified`. Fresh render-back produces `rendered_pending_manual_review`; only `pnpm cli -- pptx review --report ... --reviewer ... --evidence ...` may record `passed` after a named reviewer inspects it.
 11. Report Studio URL, source and output paths, file sizes, ISO/IEC 29500 evidence, quality report/screenshots, editability, render backend, and unresolved manual checks.
 </process>
@@ -22,6 +22,6 @@
 - Export uses the same saved revision reviewed in Studio.
 - Strict quality passes for canonical delivery.
 - Static outputs are settled and normalized.
-- PPTX editability, ISO/IEC 29500 Transitional package validation, and evidence status are described honestly.
+- PPTX editability, ISO/IEC 29500 Transitional package compatibility validation, and evidence status are described honestly.
 </success_criteria>
 </workflow>

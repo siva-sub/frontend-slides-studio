@@ -21,7 +21,6 @@ interface BrowserSlide {
   id: string;
   width: number;
   height: number;
-  background: string;
   objects: BrowserObject[];
 }
 
@@ -91,8 +90,29 @@ async function browserSlide(page: Page, slideIndex: number): Promise<BrowserSlid
       if (hasStableChildren) return null;
       return { id: element.dataset.objectId!, tagName, kind: "unsupported", bbox, style: baseStyle, zIndex };
     }).filter((value): value is BrowserObject => Boolean(value));
-    return { id: slide.dataset.slideId || `slide-${active + 1}`, width, height, background: getComputedStyle(slide).backgroundColor, objects };
+    return { id: slide.dataset.slideId || `slide-${active + 1}`, width, height, objects };
   }, slideIndex);
+}
+
+async function captureCleanPlate(page: Page, slideIndex: number, outputDir: string, slideId: string): Promise<string> {
+  const path = join(outputDir, "editable-clean-plates", `${String(slideIndex + 1).padStart(2, "0")}-${slideId.replace(/[^a-zA-Z0-9._-]/g, "-")}.png`);
+  await mkdir(join(outputDir, "editable-clean-plates"), { recursive: true });
+  await page.evaluate((active) => {
+    const slide = document.querySelectorAll<HTMLElement>(".slide")[active];
+    if (!slide) throw new Error(`slide ${active + 1} is unavailable`);
+    const records = Array.from(slide.querySelectorAll<HTMLElement>("[data-object-id]")).map((element) => ({ element, style: element.getAttribute("style") }));
+    (window as unknown as { __slidesStudioCleanPlate?: typeof records }).__slidesStudioCleanPlate = records;
+    records.forEach(({ element }) => element.style.setProperty("visibility", "hidden", "important"));
+  }, slideIndex);
+  try { await page.locator(".slide").nth(slideIndex).screenshot({ path, animations: "disabled" }); }
+  finally {
+    await page.evaluate(() => {
+      const state = window as unknown as { __slidesStudioCleanPlate?: Array<{ element: HTMLElement; style: string | null }> };
+      state.__slidesStudioCleanPlate?.forEach(({ element, style }) => { if (style === null) element.removeAttribute("style"); else element.setAttribute("style", style); });
+      delete state.__slidesStudioCleanPlate;
+    });
+  }
+  return path;
 }
 
 export async function captureEditableGraph(page: Page, sourcePath: string, outputDir: string): Promise<PresentationObjectGraphV1> {
@@ -100,7 +120,8 @@ export async function captureEditableGraph(page: Page, sourcePath: string, outpu
   const slides: PresentationObjectGraphV1["slides"] = [];
   for (let slideIndex = 0; slideIndex < count; slideIndex += 1) {
     const snapshot = await browserSlide(page, slideIndex);
-    const elements: DomSnapshotElement[] = [{ id: `${snapshot.id}-background`, tagName: "DIV", bbox: { x: 0, y: 0, width: snapshot.width, height: snapshot.height }, style: { backgroundColor: snapshot.background }, supported: true, zIndex: -1 }];
+    const cleanPlate = await captureCleanPlate(page, slideIndex, outputDir, snapshot.id);
+    const elements: DomSnapshotElement[] = [{ id: `${snapshot.id}-clean-plate`, tagName: "IMG", bbox: { x: 0, y: 0, width: snapshot.width, height: snapshot.height }, style: {}, imagePath: cleanPlate, supported: false, fallbackPath: cleanPlate, zIndex: -100_000 }];
     for (const object of snapshot.objects) {
       let imagePath: string | undefined;
       if (object.kind === "image" && object.imageSource) imagePath = await materializeImage(object.imageSource, outputDir);

@@ -96,8 +96,8 @@ See the complete [Getting Started Guide](docs/getting-started.md) for prerequisi
 | Author HTML | Source-preserving local editing and metadata | Editable HTML |
 | Share HTML | Clean, self-contained browser presentation | Editable as HTML source |
 | PDF | Deterministic settled static pages | Static |
-| Raster PPTX | One normalized slide image per PowerPoint page | **Not editable**; ISO/IEC 29500 Transitional package validated |
-| Editable PPTX | Native shapes, text, connectors, images, and declared fallbacks | ISO/IEC 29500 Transitional package validated and evidence-gated; never treated as passed without render-back and named visual review |
+| Raster PPTX | One normalized slide image per PowerPoint page | **Not editable**; ISO/IEC 29500 Transitional package compatibility validated |
+| Editable PPTX | Native shapes, text, connectors, images, and declared fallbacks | ISO/IEC 29500 Transitional package compatibility validated and evidence-gated; never treated as passed without render-back and named visual review |
 
 ## Core Rules
 
@@ -108,7 +108,7 @@ See the complete [Getting Started Guide](docs/getting-started.md) for prerequisi
 - Motion analysis measures **when**. Motion intent decides **what**. Motion programs control runtime tracks.
 - Static export settles entrances, loops, media, transitions, and authoring chrome before capture.
 - Raster output is labeled raster. Editable output reports every native object and fallback honestly.
-- PPTX reports record ISO/IEC 29500 Transitional package validation. Format compatibility does not replace editable render-back and visual review.
+- PPTX reports record ISO/IEC 29500 Transitional package compatibility validation. Format compatibility does not replace editable render-back and visual review.
 
 ## Local Export Service
 

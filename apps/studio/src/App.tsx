@@ -289,7 +289,7 @@ export function App() {
   const exportExplanation = exportFormat === "pdf"
     ? "PDF preserves selectable text where Chrome supports it, but the pages are static and are not a natively editable presentation."
     : exportFormat === "pptx"
-      ? "Raster PPTX places one full-slide image on each page. It is standards-compatible but slide objects are not editable."
+      ? "Raster PPTX places one full-slide image on each page. ISO/IEC 29500 Transitional package compatibility is validated, but slide objects are not editable."
       : "Editable PPTX maps supported stable-ID text, shapes, and images to native objects, records raster fallbacks, requires strict quality, and remains pending manual review after render-back.";
   const runExport = async () => {
     if (store.dirty) { setExportStatus("Save the current deck before exporting so the service reads the same revision."); return; }
