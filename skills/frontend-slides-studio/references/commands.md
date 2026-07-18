@@ -75,10 +75,11 @@ Run deck-wide quality and PDF export from another terminal:
 pnpm cli -- quality --input "$(realpath dist/deck.html)" --mode canonical --strict --output quality-report.json --token "$SLIDES_STUDIO_EXPORT_TOKEN"
 pnpm cli -- export --input "$(realpath dist/deck.html)" --format pdf --quality-gate strict --wait --token "$SLIDES_STUDIO_EXPORT_TOKEN"
 ```
-Use `--format pptx` for raster PPTX.
+Use `--format pptx` for raster PPTX. Use `--format editable-pptx --quality-gate strict --wait` to map a saved HTML deck into native PowerPoint objects with declared regional fallbacks. Both PPTX modes validate their Open XML packages as ISO/IEC 29500 Transitional and record the evidence in `<output>.report.json`.
 </export_service>
 
 <editable_pptx>
+The graph command is the advanced path for callers that already have a presentation object graph:
 ```bash
 pnpm cli -- pptx editable --graph presentation-graph.json --quality-report quality-report.json --output deck.pptx
 pnpm cli -- pptx review --report deck.pptx.report.json --reviewer "Reviewer Name" --evidence "Reviewed fresh render-back."

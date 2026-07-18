@@ -211,7 +211,7 @@ async function pptxCommand(): Promise<void> {
   else throw new Error("pptx requires editable or review");
 }
 
-interface ExportJob { id: string; status: string; error?: string; qualityReport?: string; qualityPassed?: boolean; }
+interface ExportJob { id: string; status: string; error?: string; qualityReport?: string; qualityPassed?: boolean; output?: string; exportReport?: string; editableStatus?: string; }
 
 async function waitForExportJob(service: string, token: string, job: ExportJob, deadline: number, pollMs: number): Promise<ExportJob> {
   if (["complete", "failed"].includes(job.status)) return job;
@@ -225,7 +225,10 @@ async function waitForExportJob(service: string, token: string, job: ExportJob, 
 async function exportCommand(): Promise<void> {
   const source = resolve(required("--input")); const format = required("--format"); const service = flag("--service", "http://127.0.0.1:4317")!; const token = process.env.SLIDES_STUDIO_EXPORT_TOKEN || flag("--token");
   if (!token) throw new Error("SLIDES_STUDIO_EXPORT_TOKEN or --token is required");
-  const qualityGate = flag("--quality-gate", "report")!; if (!["off", "report", "strict"].includes(qualityGate)) throw new Error("--quality-gate must be off, report, or strict");
+  if (!["pdf", "pptx", "editable-pptx"].includes(format)) throw new Error("--format must be pdf, pptx, or editable-pptx");
+  const requestedQualityGate = flag("--quality-gate", format === "editable-pptx" ? "strict" : "report")!;
+  if (format === "editable-pptx" && requestedQualityGate !== "strict") throw new Error("editable-pptx requires --quality-gate strict");
+  const qualityGate = requestedQualityGate; if (!["off", "report", "strict"].includes(qualityGate)) throw new Error("--quality-gate must be off, report, or strict");
   const qualityMode = flag("--quality-mode", "canonical")!; if (!["canonical", "imported"].includes(qualityMode)) throw new Error("--quality-mode must be canonical or imported");
   const response = await fetch(`${service}/jobs`, { method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json", origin: "http://127.0.0.1" }, body: JSON.stringify({ source, format, qualityGate, qualityMode }) });
   if (!response.ok) throw new Error(await response.text());
@@ -256,5 +259,5 @@ try {
   else if (command === "build") await buildCommand();
   else if (command === "export") await exportCommand();
   else if (command === "pptx") await pptxCommand();
-  else { console.log("slides-studio doctor | new [deck.html] | import --input deck.html --output normalized.html | styles list|inspect | recipes list|inspect|scaffold | layouts query|inspect|normalize | diagram render|validate|export | visual generate|edit|reconstruct | asset plan|generate | media reframe | motion analyze|apply | transition apply | quality | validate | build | export | pptx editable|review"); if (command) process.exitCode = 1; }
+  else { console.log("slides-studio doctor | new [deck.html] | import --input deck.html --output normalized.html | styles list|inspect | recipes list|inspect|scaffold | layouts query|inspect|normalize | diagram render|validate|export | visual generate|edit|reconstruct | asset plan|generate | media reframe | motion analyze|apply | transition apply | quality | validate | build | export --format pdf|pptx|editable-pptx | pptx editable|review"); if (command) process.exitCode = 1; }
 } catch (error) { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; }

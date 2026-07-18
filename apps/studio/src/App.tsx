@@ -24,6 +24,8 @@ import { normalizeDeck } from "./lib/normalizeDeck";
 import { applyObjectMotion, applySlideTransition, createMotionTrack, readMotionProgram, readSlideTransition, removeObjectMotion, type MotionPreset } from "./lib/motion";
 import { changeObjectLayer, type LayerAction } from "./lib/objectOperations";
 import { revisionFor, saveSnapshot } from "./lib/storage";
+import { applyLayoutSlotToObject, applyStyleToHtml, attachLayoutToPage, type StyleApplyScope } from "./lib/style";
+import { buildSlideThumbnails } from "./lib/thumbnails";
 import { type StudioMode, useStudioStore } from "./store";
 
 const STYLE_OPTIONS = listStyles();
@@ -82,6 +84,8 @@ export function App() {
   const [recipeId, setRecipeId] = useState(INITIAL_RECIPE?.id ?? "");
   const [styleId, setStyleId] = useState(INITIAL_STYLE_ID);
   const [layoutId, setLayoutId] = useState("");
+  const [stylePreview, setStylePreview] = useState(false);
+  const [authoringStatus, setAuthoringStatus] = useState("Choose a style to preview it; Apply writes visible theme CSS into the deck.");
   const [diagramJson, setDiagramJson] = useState("");
   const [diagramStatus, setDiagramStatus] = useState("Paste a DiagramSpec v1/v2 JSON document to insert editable SVG primitives.");
   const [exportSourcePath, setExportSourcePath] = useState("");
@@ -89,7 +93,7 @@ export function App() {
   const [exportQualityGate, setExportQualityGate] = useState<ExportQualityGate>("strict");
   const [exportBusy, setExportBusy] = useState(false);
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
-  const [exportStatus, setExportStatus] = useState("Save the deck, then enter the absolute path visible to the local export service.");
+  const [exportStatus, setExportStatus] = useState("Choose an output intent. PDF is static with selectable text; editable presentation output is PPTX.");
 
   const load = async (fileName: string, source: string) => {
     for (const url of previewAssetUrls.current.values()) URL.revokeObjectURL(url);
@@ -98,6 +102,7 @@ export function App() {
     const revision = await revisionFor(normalized.html);
     store.loadDeck({ fileName, html: normalized.html, slideCount: normalized.slideCount, strategy: normalized.strategy, confidence: normalized.confidence, warnings: normalized.warnings, revision });
     setFrameSource(normalized.html);
+    setStylePreview(false);
     setImportNotice(`${normalized.strategy} · ${normalized.confidence} confidence · ${normalized.slideCount} page${normalized.slideCount === 1 ? "" : "s"}`);
     setQualityReport(null);
   };
@@ -129,6 +134,11 @@ export function App() {
   useEffect(() => {
     if (!compatibleLayouts.some((layout) => compoundLayoutId(layout.styleId, layout.id) === layoutId)) setLayoutId(compatibleLayouts[0] ? compoundLayoutId(compatibleLayouts[0].styleId, compatibleLayouts[0].id) : "");
   }, [styleId, layoutId]);
+  const styledFrameSource = useMemo(() => {
+    if (!stylePreview || !selectedStyle || !frameSource) return frameSource;
+    try { return applyStyleToHtml(frameSource, selectedStyle.style, "page", store.currentSlide, { ...(recipeId ? { recipeId } : {}), ...(layoutId ? { layoutId } : {}) }); }
+    catch { return frameSource; }
+  }, [frameSource, stylePreview, selectedStyle, store.currentSlide, recipeId, layoutId]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -149,7 +159,7 @@ export function App() {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
-  const srcDoc = useMemo(() => frameSource ? injectStudioBridge(resolvePreviewMediaSources(frameSource, previewAssetUrls.current)) : "", [frameSource, previewAssetRevision]);
+  const srcDoc = useMemo(() => styledFrameSource ? injectStudioBridge(resolvePreviewMediaSources(styledFrameSource, previewAssetUrls.current)) : "", [styledFrameSource, previewAssetRevision]);
   const selectSlide = (index: number) => { store.setCurrentSlide(index); setQualityReport(null); frame.current?.contentWindow?.postMessage({ type: "studio:go-to", protocolVersion: 1, index }, "*"); };
   const applyInspectorText = (text: string) => {
     if (!store.selectedObjectId) return;
@@ -160,6 +170,31 @@ export function App() {
   };
   const restore = (direction: "undo" | "redo") => { direction === "undo" ? store.undo() : store.redo(); queueMicrotask(() => setFrameSource(useStudioStore.getState().sourceHtml)); };
   const commitDeckOperation = async (html: string, label: string) => { const revision = await revisionFor(html); store.commit(html, label, revision); store.setSlideCount(new DOMParser().parseFromString(html, "text/html").querySelectorAll(".slide").length); store.selectObject(null); setQualityReport(null); setFrameSource(html); };
+  const applySelectedStyle = (scope: StyleApplyScope) => {
+    if (!selectedStyle) return;
+    try {
+      const next = applyStyleToHtml(store.sourceHtml, selectedStyle.style, scope, store.currentSlide, { ...(recipeId ? { recipeId } : {}), ...(layoutId ? { layoutId } : {}) });
+      setStylePreview(false);
+      setAuthoringStatus(`Applied ${selectedStyle.style.name} to ${scope === "deck" ? "the deck" : `page ${store.currentSlide + 1}`}.`);
+      void commitDeckOperation(next, `Apply style ${selectedStyle.style.id}`);
+    } catch (error) { setAuthoringStatus(error instanceof Error ? error.message : String(error)); }
+  };
+  const attachSelectedLayout = (nextLayoutId = layoutId) => {
+    if (!nextLayoutId || !styleId) return;
+    try {
+      const next = attachLayoutToPage(store.sourceHtml, store.currentSlide, styleId, nextLayoutId, recipeId || undefined);
+      setAuthoringStatus(`Attached layout contract ${nextLayoutId} to page ${store.currentSlide + 1}; existing geometry is preserved.`);
+      void commitDeckOperation(next, `Attach layout ${nextLayoutId}`);
+    } catch (error) { setAuthoringStatus(error instanceof Error ? error.message : String(error)); }
+  };
+  const applySelectedSlotGeometry = () => {
+    if (!store.selectedObjectId || !selectedLayoutProfile || !selectedMediaFrame || selectedMediaFrame.layoutSlot === "freeform") return;
+    try {
+      const next = applyLayoutSlotToObject(store.sourceHtml, store.selectedObjectId, selectedLayoutProfile, selectedMediaFrame.layoutSlot);
+      setAuthoringStatus(`Applied ${selectedMediaFrame.layoutSlot} slot geometry from ${selectedLayoutProfile.id}.`);
+      void commitDeckOperation(next, `Apply layout slot ${selectedMediaFrame.layoutSlot}`);
+    } catch (error) { setAuthoringStatus(error instanceof Error ? error.message : String(error)); }
+  };
   const applyLayer = (action: LayerAction) => { if (!store.selectedObjectId) return; void commitDeckOperation(changeObjectLayer(store.sourceHtml, store.selectedObjectId, action), `Layer ${action}`); };
   const nudgeSelected = (dx: number, dy: number) => frame.current?.contentWindow?.postMessage({ type: "studio:nudge-selected", protocolVersion: 1, dx, dy }, "*");
   const openNativeFile = async () => {
@@ -251,6 +286,11 @@ export function App() {
       setDiagramStatus(error instanceof Error ? error.message : String(error));
     }
   };
+  const exportExplanation = exportFormat === "pdf"
+    ? "PDF preserves selectable text where Chrome supports it, but the pages are static and are not a natively editable presentation."
+    : exportFormat === "pptx"
+      ? "Raster PPTX places one full-slide image on each page. It is standards-compatible but slide objects are not editable."
+      : "Editable PPTX maps supported stable-ID text, shapes, and images to native objects, records raster fallbacks, requires strict quality, and remains pending manual review after render-back.";
   const runExport = async () => {
     if (store.dirty) { setExportStatus("Save the current deck before exporting so the service reads the same revision."); return; }
     setExportBusy(true); setExportJob(null);
@@ -299,10 +339,7 @@ export function App() {
   const selectedText = useMemo(() => { if (!store.selectedObjectId) return ""; const doc = new DOMParser().parseFromString(store.sourceHtml, "text/html"); return doc.querySelector(`[data-object-id="${CSS.escape(store.selectedObjectId)}"]`)?.textContent ?? ""; }, [store.sourceHtml, store.selectedObjectId]);
   const selectedMediaFrame = useMemo(() => store.selectedObjectId ? readMediaReframe(store.sourceHtml, store.selectedObjectId) : null, [store.sourceHtml, store.selectedObjectId]);
   const selectedMediaCrop = selectedMediaFrame?.crop ?? { x: 0, y: 0, width: 1, height: 1 };
-  const slideSummaries = useMemo(() => {
-    const doc = new DOMParser().parseFromString(store.sourceHtml, "text/html");
-    return Array.from(doc.querySelectorAll<HTMLElement>(".slide")).map((slide, index) => ({ index, skipped: slide.dataset.slideSkipped === "true", label: (slide.querySelector("h1,h2,h3")?.textContent || slide.textContent || `Page ${index + 1}`).replace(/\s+/g, " ").trim().slice(0, 44) || `Page ${index + 1}` })).filter((slide) => !store.search.trim() || slide.label.toLowerCase().includes(store.search.trim().toLowerCase()));
-  }, [store.sourceHtml, store.search]);
+  const slideSummaries = useMemo(() => buildSlideThumbnails(resolvePreviewMediaSources(stylePreview ? styledFrameSource : store.sourceHtml, previewAssetUrls.current)).filter((slide) => !store.search.trim() || slide.label.toLowerCase().includes(store.search.trim().toLowerCase())), [store.sourceHtml, store.search, stylePreview, styledFrameSource, previewAssetRevision]);
 
   return <main className="studio-shell">
     <header className="topbar">
@@ -326,8 +363,8 @@ export function App() {
       <div className="rail-heading"><span>Pages</span><em>{String(store.slideCount).padStart(2, "0")}</em></div>
       <div className="search-box"><span>⌕</span><input value={store.search} onChange={(event) => store.setSearch(event.target.value)} placeholder="Find a page" /></div>
       <div className="page-list">
-        {slideSummaries.map((slide) => <button key={slide.index} onClick={() => selectSlide(slide.index)} className={`page-thumb ${store.currentSlide === slide.index ? "active" : ""} ${slide.skipped ? "skipped" : ""}`}>
-          <span className="page-number">{String(slide.index + 1).padStart(2, "0")}</span><div className="mini-canvas"><i></i><b></b><i></i></div><span className="page-label">{slide.skipped ? `Skipped · ${slide.label}` : slide.label}</span>
+        {slideSummaries.map((slide) => <button key={slide.slideId} onClick={() => selectSlide(slide.index)} className={`page-thumb ${store.currentSlide === slide.index ? "active" : ""} ${slide.skipped ? "skipped" : ""}`}>
+          <span className="page-number">{String(slide.index + 1).padStart(2, "0")}</span><div className="mini-canvas"><iframe name={`slide-thumbnail-${slide.index + 1}`} title={`Page ${slide.index + 1} preview`} sandbox="allow-scripts" srcDoc={slide.html} loading="lazy" tabIndex={-1} /></div><span className="page-label">{slide.skipped ? `Skipped · ${slide.label}` : slide.label}</span>
         </button>)}
       </div>
       <button className="add-page" onClick={() => { void commitDeckOperation(duplicateSlide(store.sourceHtml, store.currentSlide), "Duplicate page"); }}>＋ Duplicate page</button>
@@ -335,7 +372,7 @@ export function App() {
 
     <section className="workspace">
       <div className="workspace-meta"><div><span className={`confidence ${store.confidence}`}>{store.confidence}</span><strong>{store.fileName}</strong>{store.dirty && <i>UNSAVED</i>}</div><span>{importNotice}</span></div>
-      <div className="canvas-stage"><iframe ref={frame} title="Imported deck" sandbox="allow-scripts" srcDoc={srcDoc} onLoad={() => { frame.current?.contentWindow?.postMessage({ type: "studio:set-mode", protocolVersion: 1, mode: useStudioStore.getState().mode }, "*"); frame.current?.contentWindow?.postMessage({ type: "studio:go-to", protocolVersion: 1, index: useStudioStore.getState().currentSlide }, "*"); }} /></div>
+      <div className="canvas-stage"><iframe ref={frame} name="studio-preview" title="Imported deck" sandbox="allow-scripts" srcDoc={srcDoc} onLoad={() => { frame.current?.contentWindow?.postMessage({ type: "studio:set-mode", protocolVersion: 1, mode: useStudioStore.getState().mode }, "*"); frame.current?.contentWindow?.postMessage({ type: "studio:go-to", protocolVersion: 1, index: useStudioStore.getState().currentSlide }, "*"); }} /></div>
       <div className="canvas-footer"><span><b>16:9</b> fixed stage</span><span>100%</span><span>Object moves compose through CSS <code>translate</code>, not animated <code>transform</code>.</span></div>
     </section>
 
@@ -343,18 +380,20 @@ export function App() {
       <div className="rail-heading"><span>Inspector</span><em>{store.mode.toUpperCase()}</em></div>
       <div className="inspector-section style-recipe-panel">
         <label htmlFor="recipe-profile">Recipe</label>
-        <select id="recipe-profile" value={recipeId} onChange={(event) => { const nextId = event.target.value; const recipe = inspectRecipe(nextId); setRecipeId(nextId); setStyleId(recipe.recommendedStyleId); setLayoutId(""); }}>
+        <select id="recipe-profile" value={recipeId} onChange={(event) => { const nextId = event.target.value; const recipe = inspectRecipe(nextId); setRecipeId(nextId); setStyleId(recipe.recommendedStyleId); setLayoutId(""); setStylePreview(true); setAuthoringStatus(`Previewing the recommended ${recipe.recommendedStyleId} style on page ${store.currentSlide + 1}.`); }}>
           {RECIPE_OPTIONS.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}
         </select>
         <label htmlFor="style-profile">Style</label>
-        <select id="style-profile" value={styleId} onChange={(event) => { setStyleId(event.target.value); setLayoutId(""); }}>
+        <select id="style-profile" value={styleId} onChange={(event) => { setStyleId(event.target.value); setLayoutId(""); setStylePreview(true); setAuthoringStatus(`Previewing ${event.target.selectedOptions[0]?.textContent ?? event.target.value} on page ${store.currentSlide + 1}; Apply to persist it.`); }}>
           {STYLE_OPTIONS.map((style) => <option key={style.id} value={style.id}>{style.name}</option>)}
         </select>
-        <label htmlFor="layout-profile">Compatible layout</label>
-        <select id="layout-profile" value={layoutId} onChange={(event) => setLayoutId(event.target.value)}>
+        <div className="control-grid style-actions"><button className={stylePreview ? "active" : ""} onClick={() => setStylePreview((value) => !value)}>{stylePreview ? "Stop preview" : "Preview style"}</button><button onClick={() => applySelectedStyle("page")}>Apply to page</button><button onClick={() => applySelectedStyle("deck")}>Apply to deck</button></div>
+        <label htmlFor="layout-profile">Layout contract</label>
+        <select id="layout-profile" value={layoutId} onChange={(event) => { const next = event.target.value; setLayoutId(next); attachSelectedLayout(next); }}>
           {compatibleLayouts.map((layout) => { const id = compoundLayoutId(layout.styleId, layout.id); return <option key={id} value={id}>{layout.role} · {layout.name}</option>; })}
         </select>
-        <p>{selectedRecipe?.description ?? "Style and layout metadata are attached to the next generated asset plan."}</p>
+        <button className="control-button" disabled={!layoutId} onClick={() => attachSelectedLayout()}>Attach to page</button>
+        <p>{selectedRecipe?.description ?? "Choose a recipe and style."}</p><p className="authoring-status" aria-live="polite">{authoringStatus}</p>
       </div>
       <div className="inspector-section diagram-panel">
         <label htmlFor="diagram-json">DiagramSpec JSON</label>
@@ -372,6 +411,7 @@ export function App() {
             {selectedMediaFrame && <>
               <label htmlFor="media-slot">Layout slot</label>
               <select id="media-slot" value={selectedMediaFrame.layoutSlot} onChange={(event) => commitMediaReframe({ layoutSlot: event.target.value })}><option value="freeform">Freeform</option>{selectedLayoutProfile?.slots.map((slot) => <option key={slot.id} value={slot.id}>{slot.id} · {slot.fit}</option>)}</select>
+              <button className="control-button" disabled={selectedMediaFrame.layoutSlot === "freeform" || !selectedLayoutProfile} onClick={applySelectedSlotGeometry}>Apply slot geometry</button>
               <label htmlFor="media-fit">Fit</label>
               <select id="media-fit" value={selectedMediaFrame.fit} onChange={(event) => commitMediaReframe({ fit: event.target.value as "contain" | "cover" })}><option value="cover">Cover</option><option value="contain">Contain</option></select>
               <label htmlFor="focal-x">Focal X <output>{Math.round(selectedMediaFrame.focalX * 100)}%</output></label><input id="focal-x" type="range" min="0" max="1" step="0.01" value={selectedMediaFrame.focalX} onChange={(event) => commitMediaReframe({ focalX: Number(event.target.value) })} />
@@ -430,10 +470,11 @@ export function App() {
         <input id="export-source-path" value={exportSourcePath} onChange={(event) => setExportSourcePath(event.target.value)} placeholder="/absolute/path/to/saved-deck.html" />
         <label htmlFor="export-service">Local service</label><input id="export-service" value={assetService} onChange={(event) => setAssetService(event.target.value)} />
         <label htmlFor="export-token">Session token</label><input id="export-token" type="password" value={assetToken} onChange={(event) => setAssetToken(event.target.value)} autoComplete="off" />
-        <div className="two-col"><div><label htmlFor="export-format">Format</label><select id="export-format" value={exportFormat} onChange={(event) => setExportFormat(event.target.value as ExportFormat)}><option value="pdf">PDF</option><option value="pptx">Raster PPTX</option></select></div><div><label htmlFor="export-quality-gate">Quality gate</label><select id="export-quality-gate" value={exportQualityGate} onChange={(event) => setExportQualityGate(event.target.value as ExportQualityGate)}><option value="strict">Strict</option><option value="report">Report</option><option value="off">Off</option></select></div></div>
+        <div className="two-col"><div><label htmlFor="export-format">Output intent</label><select id="export-format" value={exportFormat} onChange={(event) => { const format = event.target.value as ExportFormat; setExportFormat(format); if (format === "editable-pptx") setExportQualityGate("strict"); }}><option value="pdf">PDF — text-preserving static pages</option><option value="pptx">PPTX — raster, non-editable</option><option value="editable-pptx">Editable PPTX — native objects + fallbacks</option></select></div><div><label htmlFor="export-quality-gate">Quality gate</label><select id="export-quality-gate" value={exportQualityGate} disabled={exportFormat === "editable-pptx"} onChange={(event) => setExportQualityGate(event.target.value as ExportQualityGate)}><option value="strict">Strict</option><option value="report">Report</option><option value="off">Off</option></select></div></div>
+        <p className="export-intent">{exportExplanation}</p>
         <button className="control-button export-button" disabled={exportBusy || !exportSourcePath.trim() || !assetToken.trim() || store.dirty} onClick={() => { void runExport(); }}>{exportBusy ? "Exporting…" : store.dirty ? "Save before export" : "Run export"}</button>
         <p className="export-status" aria-live="polite">{exportStatus}</p>
-        {exportJob && <dl><div><dt>Status</dt><dd>{exportJob.status} · {Math.round(exportJob.progress * 100)}%</dd></div>{exportJob.output && <div><dt>Output</dt><dd>{exportJob.output}</dd></div>}{exportJob.qualityReport && <div><dt>Quality</dt><dd>{exportJob.qualityPassed === false ? "review" : "pass"} · {exportJob.qualityReport}</dd></div>}{exportJob.error && <div><dt>Error</dt><dd>{exportJob.error}</dd></div>}</dl>}
+        {exportJob && <dl><div><dt>Status</dt><dd>{exportJob.status} · {Math.round(exportJob.progress * 100)}%</dd></div>{exportJob.output && <div><dt>Output</dt><dd>{exportJob.output}</dd></div>}{exportJob.exportReport && <div><dt>Report</dt><dd>{exportJob.editableStatus ? `${exportJob.editableStatus} · ` : ""}{exportJob.exportReport}</dd></div>}{exportJob.qualityReport && <div><dt>Quality</dt><dd>{exportJob.qualityPassed === false ? "review" : "pass"} · {exportJob.qualityReport}</dd></div>}{exportJob.error && <div><dt>Error</dt><dd>{exportJob.error}</dd></div>}</dl>}
       </div>
       <div className="inspector-section"><label>Current page</label><div className="control-grid"><button disabled={store.currentSlide === 0} onClick={() => { void commitDeckOperation(reorderSlide(store.sourceHtml, store.currentSlide, store.currentSlide - 1), "Move page up"); }}>Move up</button><button disabled={store.currentSlide >= store.slideCount - 1} onClick={() => { void commitDeckOperation(reorderSlide(store.sourceHtml, store.currentSlide, store.currentSlide + 1), "Move page down"); }}>Move down</button><button onClick={() => { void commitDeckOperation(toggleSlideSkipped(store.sourceHtml, store.currentSlide), "Toggle skipped page"); }}>Skip / include</button><button className="danger-button" onClick={() => { try { void commitDeckOperation(deleteSlide(store.sourceHtml, store.currentSlide), "Delete page"); } catch (error) { setImportNotice(error instanceof Error ? error.message : String(error)); } }}>Delete page</button></div></div>
       <div className="inspector-section audit"><label>Import audit</label><dl><div><dt>Strategy</dt><dd>{store.strategy}</dd></div><div><dt>History</dt><dd>{store.history.length}/50</dd></div><div><dt>Runtime</dt><dd>Sandboxed</dd></div></dl>{store.warnings.map((warning) => <p key={warning}>⚑ {warning}</p>)}</div>

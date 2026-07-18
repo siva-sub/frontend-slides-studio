@@ -4,7 +4,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Fastify, { type FastifyInstance } from "fastify";
 import { chromium, type Browser, type Page } from "playwright";
-import { exportRasterPptx } from "@slides-studio/export";
+import { exportEditablePptx, exportRasterPptx } from "@slides-studio/export";
 import {
   createDeterministicAssetProvider,
   createPythonImageAssetProvider,
@@ -12,9 +12,13 @@ import {
   type AssetGenerationProvider,
 } from "./assets.js";
 import { auditSource, runPageQualityAudit, settlePageForExport } from "./quality.js";
+import { captureEditableGraph } from "./editable.js";
 import { isLoopbackOrigin, validateSource } from "./security.js";
 
-interface Job { id: string; format: "pdf" | "pptx"; status: "queued" | "running" | "complete" | "failed"; progress: number; source: string; qualityGate: "off" | "report" | "strict"; qualityMode: "canonical" | "imported"; qualityReport?: string; qualityPassed?: boolean; output?: string; error?: string; createdAt: number; events: Array<{ id: number; data: Record<string, unknown> }>; }
+interface Job { id: string; format: "pdf" | "pptx" | "editable-pptx"; status: "queued" | "running" | "complete" | "failed"; progress: number; source: string; qualityGate: "off" | "report" | "strict"; qualityMode: "canonical" | "imported"; qualityReport?: string; qualityPassed?: boolean; output?: string; exportReport?: string; editableStatus?: string; error?: string; createdAt: number; events: Array<{ id: number; data: Record<string, unknown> }>; }
+const EXPORT_STAGE_WIDTH = 1920;
+const EXPORT_STAGE_HEIGHT = 1080;
+const PDF_PAGE_SCALE = 2 / 3;
 const jobs = new Map<string, Job>();
 const clients = new Map<string, Set<(event: Job["events"][number]) => void>>();
 const emit = (job: Job, data: Record<string, unknown>) => { const event = { id: job.events.length + 1, data }; job.events.push(event); clients.get(job.id)?.forEach((listener) => listener(event)); };
@@ -60,7 +64,9 @@ async function runJob(job: Job, jobRoot: string): Promise<void> {
       if (job.qualityGate === "strict" && !quality.report.passed) throw new Error(`strict quality gate failed; report: ${quality.reportPath}`);
     }
     if (job.format === "pdf") {
-      await page.evaluate(() => {
+      await page.reload({ waitUntil: "networkidle", timeout: 30_000 });
+      await settlePageForExport(page);
+      await page.evaluate(({ pageWidth, pageHeight }) => {
         const sourceSlides = Array.from(document.querySelectorAll<HTMLElement>(".slide"));
         sourceSlides.forEach((slide, index) => { slide.dataset.slideId ||= `export-slide-${index + 1}`; });
         const printRoot = document.createElement("main"); printRoot.id = "slides-studio-print-root";
@@ -70,13 +76,13 @@ async function runJob(job: Job, jobRoot: string): Promise<void> {
           const stageWidth = sourceStage?.offsetWidth || sourceSlide.offsetWidth || 1920;
           const stageHeight = sourceStage?.offsetHeight || sourceSlide.offsetHeight || 1080;
           const stage = sourceStage ? sourceStage.cloneNode(true) as HTMLElement : document.createElement("div");
-          const scale = Math.min(1280 / stageWidth, 720 / stageHeight);
+          const scale = Math.min(pageWidth / stageWidth, pageHeight / stageHeight);
           stage.classList.add("deck-stage", "slides-studio-print-stage");
           stage.style.setProperty("--slides-studio-print-width", `${stageWidth}px`);
           stage.style.setProperty("--slides-studio-print-height", `${stageHeight}px`);
           stage.style.setProperty("--slides-studio-print-scale", String(scale));
-          stage.style.setProperty("--slides-studio-print-left", `${(1280 - stageWidth * scale) / 2}px`);
-          stage.style.setProperty("--slides-studio-print-top", `${(720 - stageHeight * scale) / 2}px`);
+          stage.style.setProperty("--slides-studio-print-left", `${(pageWidth - stageWidth * scale) / 2}px`);
+          stage.style.setProperty("--slides-studio-print-top", `${(pageHeight - stageHeight * scale) / 2}px`);
           if (!sourceStage) stage.append(sourceSlide.cloneNode(true));
           stage.querySelectorAll<HTMLElement>(".slide").forEach((candidate) => {
             if (candidate.dataset.slideId !== sourceSlide.dataset.slideId) candidate.remove();
@@ -85,16 +91,25 @@ async function runJob(job: Job, jobRoot: string): Promise<void> {
           pageElement.append(stage); printRoot.append(pageElement);
         });
         document.body.replaceChildren(printRoot);
-      });
-      await page.addStyleTag({ content: "@page{size:13.333in 7.5in;margin:0}html,body{margin:0!important;padding:0!important;width:1280px!important;height:auto!important;overflow:visible!important;background:white!important}#slides-studio-print-root{margin:0!important;padding:0!important;width:1280px!important}.slides-studio-print-page{position:relative!important;width:1280px!important;height:720px!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;background:white}.slides-studio-print-page:last-child{break-after:auto;page-break-after:auto}.slides-studio-print-stage{position:absolute!important;left:var(--slides-studio-print-left)!important;top:var(--slides-studio-print-top)!important;width:var(--slides-studio-print-width)!important;height:var(--slides-studio-print-height)!important;transform:scale(var(--slides-studio-print-scale))!important;transform-origin:0 0!important}.slides-studio-print-stage>.slide{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;display:block!important}" });
+      }, { pageWidth: EXPORT_STAGE_WIDTH, pageHeight: EXPORT_STAGE_HEIGHT });
+      await page.addStyleTag({ content: `@page{size:13.333in 7.5in;margin:0}html,body{margin:0!important;padding:0!important;width:${EXPORT_STAGE_WIDTH}px!important;height:auto!important;overflow:visible!important;background:white!important}#slides-studio-print-root{margin:0!important;padding:0!important;width:${EXPORT_STAGE_WIDTH}px!important}.slides-studio-print-page{position:relative!important;width:${EXPORT_STAGE_WIDTH}px!important;height:${EXPORT_STAGE_HEIGHT}px!important;margin:0!important;padding:0!important;overflow:hidden!important;break-after:page;page-break-after:always;background:white}.slides-studio-print-page:last-child{break-after:auto;page-break-after:auto}.slides-studio-print-stage{position:absolute!important;left:var(--slides-studio-print-left)!important;top:var(--slides-studio-print-top)!important;width:var(--slides-studio-print-width)!important;height:var(--slides-studio-print-height)!important;transform:scale(var(--slides-studio-print-scale))!important;transform-origin:0 0!important}.slides-studio-print-stage>.slide{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;visibility:visible!important;opacity:1!important;pointer-events:none!important;display:block!important}` });
       job.output = join(outputDir, `${basename(job.source).replace(/\.html?$/i, "")}.pdf`);
-      await page.pdf({ path: job.output, width: "13.333in", height: "7.5in", printBackground: true, preferCSSPageSize: true, tagged: true, scale: 1 });
+      await page.pdf({ path: job.output, width: "13.333in", height: "7.5in", printBackground: true, preferCSSPageSize: true, tagged: true, scale: PDF_PAGE_SCALE });
+    } else if (job.format === "editable-pptx") {
+      await page.reload({ waitUntil: "networkidle", timeout: 30_000 });
+      await settlePageForExport(page);
+      const graph = await captureEditableGraph(page, job.source, outputDir);
+      job.output = join(outputDir, `${basename(job.source).replace(/\.html?$/i, "")}.editable.pptx`);
+      const report = await exportEditablePptx(graph, job.output, { qualityReport: job.qualityReport! });
+      job.exportReport = `${job.output}.report.json`;
+      job.editableStatus = report.status;
     } else {
       const inputs = await captureRasterSlides(page, count, outputDir, job);
       job.output = join(outputDir, `${basename(job.source).replace(/\.html?$/i, "")}.pptx`);
       await exportRasterPptx(inputs, job.output, { ...(job.qualityReport ? { qualityReport: job.qualityReport } : {}) });
+      job.exportReport = `${job.output}.report.json`;
     }
-    job.status = "complete"; job.progress = 1; emit(job, { status: job.status, progress: 1, output: job.output });
+    job.status = "complete"; job.progress = 1; emit(job, { status: job.status, progress: 1, output: job.output, ...(job.exportReport ? { exportReport: job.exportReport } : {}), ...(job.editableStatus ? { editableStatus: job.editableStatus } : {}) });
   } catch (error) { job.status = "failed"; job.error = error instanceof Error ? error.message : String(error); emit(job, { status: job.status, error: job.error }); }
   finally { await browser?.close(); }
 }
@@ -130,12 +145,13 @@ export function buildServer(options: ServerOptions): FastifyInstance {
     try { const result = await auditSource(source, outputDir, { id: `quality-${id}`, mode: request.body.mode ?? "canonical", strict: request.body.strict ?? false }); return { report: result.report, reportPath: result.reportPath, screenshots: result.screenshots.map(({ path }) => path) }; }
     catch (error) { return reply.code(500).send({ error: error instanceof Error ? error.message : String(error) }); }
   });
-  app.post<{ Body: { source: string; format: "pdf" | "pptx"; qualityGate?: "off" | "report" | "strict"; qualityMode?: "canonical" | "imported" } }>("/jobs", async (request, reply) => {
-    if (!request.body || !["pdf", "pptx"].includes(request.body.format)) return reply.code(400).send({ error: "format must be pdf or pptx" });
+  app.post<{ Body: { source: string; format: "pdf" | "pptx" | "editable-pptx"; qualityGate?: "off" | "report" | "strict"; qualityMode?: "canonical" | "imported" } }>("/jobs", async (request, reply) => {
+    if (!request.body || !["pdf", "pptx", "editable-pptx"].includes(request.body.format)) return reply.code(400).send({ error: "format must be pdf, pptx, or editable-pptx" });
     if (request.body.qualityGate && !["off", "report", "strict"].includes(request.body.qualityGate)) return reply.code(400).send({ error: "qualityGate must be off, report, or strict" });
     if (request.body.qualityMode && !["canonical", "imported"].includes(request.body.qualityMode)) return reply.code(400).send({ error: "qualityMode must be canonical or imported" });
+    if (request.body.format === "editable-pptx" && request.body.qualityGate && request.body.qualityGate !== "strict") return reply.code(400).send({ error: "editable-pptx requires qualityGate=strict" });
     let source: string; try { source = await validateSource(options.sourceRoot, request.body.source); } catch (error) { return reply.code(400).send({ error: error instanceof Error ? error.message : String(error) }); }
-    const job: Job = { id: randomUUID(), format: request.body.format, status: "queued", progress: 0, source, qualityGate: request.body.qualityGate ?? "report", qualityMode: request.body.qualityMode ?? "canonical", createdAt: Date.now(), events: [] }; jobs.set(job.id, job); void runJob(job, options.jobRoot); return reply.code(202).send(job);
+    const job: Job = { id: randomUUID(), format: request.body.format, status: "queued", progress: 0, source, qualityGate: request.body.format === "editable-pptx" ? "strict" : request.body.qualityGate ?? "report", qualityMode: request.body.qualityMode ?? "canonical", createdAt: Date.now(), events: [] }; jobs.set(job.id, job); void runJob(job, options.jobRoot); return reply.code(202).send(job);
   });
   app.get<{ Params: { id: string } }>("/jobs/:id", async (request, reply) => { const job = jobs.get(request.params.id); return job ? job : reply.code(404).send({ error: "job not found" }); });
   app.get<{ Params: { id: string }; Querystring: { after?: string } }>("/jobs/:id/events", async (request, reply) => {

@@ -123,7 +123,7 @@ A typical Studio session is:
 7. Replace and reframe images with contain/cover, focal-point, pan, and zoom controls.
 8. Run the current-page quality audit and focus reported issues.
 9. Wait for `UNSAVED`, then press **Save**. Reload the same authenticated URL to confirm persistence.
-10. Start the local export service and submit the already-prefilled saved path for PDF or raster PPTX.
+10. Start the local export service and submit the already-prefilled saved path for PDF, raster PPTX, or editable PPTX.
 
 The launcher prints its log and stop command. Stop the session when finished:
 
@@ -242,13 +242,13 @@ pnpm cli -- export \
   --token "$SLIDES_STUDIO_EXPORT_TOKEN"
 ```
 
-Use `--format pptx` for a raster PPTX. Raster PPTX places one normalized image on each PowerPoint page and is not editable.
+Use `--format pptx` for a raster PPTX. Raster PPTX places one normalized image on each PowerPoint page and is not editable. Use `--format editable-pptx --quality-gate strict --wait` to map supported stable-ID text, shapes, and images from the saved HTML into native PowerPoint objects. Unsupported regions remain declared raster fallbacks.
 
-The service returns asynchronous job state, report paths, and output paths. Strict mode fails the job when blocking rendered-quality issues remain.
+Both PPTX modes validate the generated Open XML package as ISO/IEC 29500 Transitional. The report records CRC validation, required presentation parts, resolved internal relationships, content types, and the number of checked parts. The service returns asynchronous job state, report paths, and output paths. Strict mode fails the job when blocking rendered-quality issues remain.
 
 ## Editable PPTX Review
 
-Editable PPTX starts from a presentation object graph and, by default, requires a quality report:
+Studio and the service can create editable PPTX directly from a saved HTML deck. The presentation object graph command remains available for advanced callers and requires a quality report:
 
 ```bash
 pnpm cli -- pptx editable \
@@ -266,7 +266,7 @@ pnpm cli -- pptx review \
   --evidence "Reviewed render-back images; no blocking mismatch found."
 ```
 
-Do not describe editable PPTX as passed before this review. Unsupported regions remain declared raster fallbacks rather than pretending to be native objects.
+Do not describe editable PPTX as passed before this review. ISO/IEC 29500 package validation establishes file-format compatibility; it does not replace render-back and visual review.
 
 ## Verify a Development Checkout
 

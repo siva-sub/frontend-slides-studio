@@ -49,10 +49,74 @@ const SOURCE_REPOSITORY = "https://github.com/JuneYaooo/gpt-image2-ppt-skills";
 const SOURCE_COMMIT = "ce4714225d938b02806af3660a46e62be8900e29";
 
 const HEX_RE = /#[0-9a-fA-F]{3,8}\b/;
+const HEX_ALL_RE = /#[0-9a-fA-F]{3,8}\b/g;
 function firstHex(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const m = HEX_RE.exec(value);
-  return m ? m[0] : undefined;
+  return m ? normalizeHex(m[0]) : undefined;
+}
+
+function normalizeHex(value: string): string {
+  const raw = value.slice(1);
+  if (raw.length === 3 || raw.length === 4) return `#${raw.split("").map((part) => `${part}${part}`).join("").slice(0, 6)}`.toUpperCase();
+  return `#${raw.slice(0, 6)}`.toUpperCase();
+}
+
+function rgb(value: string): [number, number, number] {
+  const hex = normalizeHex(value).slice(1);
+  return [Number.parseInt(hex.slice(0, 2), 16), Number.parseInt(hex.slice(2, 4), 16), Number.parseInt(hex.slice(4, 6), 16)];
+}
+
+function mix(left: string, right: string, ratio: number): string {
+  const a = rgb(left); const b = rgb(right);
+  return `#${a.map((value, index) => Math.round(value * (1 - ratio) + b[index]! * ratio).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+function luminance(value: string): number {
+  const [r, g, b] = rgb(value).map((channel) => { const normalized = channel / 255; return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}
+
+function firstHexNear(text: string, labels: RegExp): string | undefined {
+  const match = labels.exec(text);
+  return match ? firstHex(text.slice(match.index, match.index + 180)) : undefined;
+}
+
+function fallbackAccent(styleId: string): string {
+  const choices = ["#F05A36", "#2563EB", "#7C3AED", "#0F9D75", "#D97706", "#DB2777", "#0891B2"];
+  let hash = 2166136261;
+  for (const char of styleId) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return choices[Math.abs(hash) % choices.length]!;
+}
+
+function derivedPalette(styleId: string, text: string, theme: { primary?: string; accent?: string[]; background?: string }): StyleProfile["palette"] {
+  const colors = [...new Set((text.match(HEX_ALL_RE) ?? []).map(normalizeHex))];
+  const darkStyle = /深色|dark|黑金|夜|neon|terminal|cyber/i.test(text.slice(0, 1800));
+  const explicitPaper = firstHex(theme.background) ?? firstHexNear(text, /(?:背景|background|底色)/i);
+  const paper = explicitPaper ?? colors.find((color) => darkStyle ? luminance(color) < 0.12 : luminance(color) > 0.78) ?? (darkStyle ? "#111318" : "#F7F5EF");
+  const explicitInk = firstHexNear(text, /(?:文字|text|前景|foreground|ink)/i);
+  const ink = explicitInk && Math.abs(luminance(explicitInk) - luminance(paper)) > 0.35 ? explicitInk : luminance(paper) < 0.35 ? "#F7F5EF" : "#171914";
+  const accent = firstHex(theme.primary) ?? (theme.accent ?? []).map(firstHex).find((value): value is string => !!value) ?? firstHexNear(text, /(?:强调|accent|主色|primary)/i) ?? colors.find((color) => color !== paper && color !== ink && luminance(color) > 0.05 && luminance(color) < 0.8) ?? fallbackAccent(styleId);
+  return {
+    paper,
+    paper2: mix(paper, luminance(paper) < 0.35 ? "#FFFFFF" : "#000000", 0.06),
+    ink,
+    muted: mix(ink, paper, 0.48),
+    rule: mix(ink, paper, 0.78),
+    accent,
+    accentTint: mix(accent, paper, 0.82),
+    link: accent,
+  };
+}
+
+function derivedFonts(text: string, theme: { fonts?: { title?: string; body?: string } }): StyleProfile["fonts"] {
+  const serif = /衬线|serif|editorial|杂志/i.test(text);
+  const mono = /等宽|monospace|\bmono\b|terminal|代码|code/i.test(text);
+  return {
+    title: theme.fonts?.title || (serif ? "Georgia, Noto Serif, serif" : mono ? "IBM Plex Mono, ui-monospace, monospace" : "Inter, Arial, sans-serif"),
+    body: theme.fonts?.body || (mono ? "IBM Plex Mono, ui-monospace, monospace" : "Inter, Arial, sans-serif"),
+    mono: "IBM Plex Mono, ui-monospace, monospace",
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -61,14 +125,9 @@ function firstHex(value: string | undefined): string | undefined {
 
 function normalizeStyle(sidecar: UpstreamSidecar, promptMarkdown: string): StyleProfile {
   const theme = (sidecar.theme ?? {}) as { primary?: string; accent?: string[]; background?: string; fonts?: { title?: string; body?: string } };
-  const accentHex = firstHex(theme.primary) ?? (theme.accent ?? []).map(firstHex).find((v): v is string => !!v);
-  const palette: StyleProfile["palette"] = {};
-  const paperHex = firstHex(theme.background);
-  if (paperHex) palette.paper = paperHex;
-  if (accentHex) palette.accent = accentHex;
-  const fonts: StyleProfile["fonts"] = {};
-  if (theme.fonts?.title) fonts.title = theme.fonts.title;
-  if (theme.fonts?.body) fonts.body = theme.fonts.body;
+  const styleText = `${sidecar.global_style}\n${promptMarkdown}`;
+  const palette = derivedPalette(sidecar.style_id, styleText, theme);
+  const fonts = derivedFonts(styleText, theme);
 
   const profile: StyleProfile = {
     schemaVersion: 1,

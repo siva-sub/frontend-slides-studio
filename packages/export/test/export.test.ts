@@ -3,11 +3,28 @@ import { spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
-import { approveEditablePptx, buildAuthorHtml, buildShareHtml, exportEditablePptx } from "../src/index.js";
+import { approveEditablePptx, buildAuthorHtml, buildShareHtml, exportEditablePptx, validatePptxOpenXmlPackage } from "../src/index.js";
 
 const digest = (value: string | Buffer) => ({ algorithm: "sha256" as const, value: createHash("sha256").update(value).digest("hex") });
 const passingQuality = { schemaVersion: 1, id: "quality", canvas: { width: 1920, height: 1080 }, mode: "canonical", strict: true, issues: [], passed: true, summary: { total: 0, info: 0, warning: 0, error: 0, critical: 0, hard: 0 } };
+
+describe("ISO/IEC 29500 package validation", () => {
+  it("rejects a Transitional package whose internal relationship target is missing", async () => {
+    const root = await mkdtemp(join(tmpdir(), "slides-studio-invalid-pptx-"));
+    try {
+      const path = join(root, "broken.pptx"); const zip = new JSZip();
+      zip.file("[Content_Types].xml", '<Types><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/></Types>');
+      zip.file("_rels/.rels", '<Relationships><Relationship Id="rId1" Type="officeDocument" Target="ppt/presentation.xml"/></Relationships>');
+      zip.file("ppt/presentation.xml", '<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"/>');
+      zip.file("ppt/_rels/presentation.xml.rels", '<Relationships><Relationship Id="rId1" Type="slide" Target="slides/missing.xml"/></Relationships>');
+      zip.file("ppt/slides/slide1.xml", "<p:sld/>");
+      await writeFile(path, await zip.generateAsync({ type: "nodebuffer" }));
+      await expect(validatePptxOpenXmlPackage(path)).rejects.toThrow(/missing part/);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+});
 
 describe("HTML builds", () => {
   const source = '<html><head></head><body><section class="slide"><button onclick="bad()" data-authoring-ui>Editor</button><a href="javascript:bad()">Bad</a></section><script data-private-metadata>{}</script></body></html>';
@@ -39,7 +56,7 @@ describe("HTML builds", () => {
       const output = join(root, "cropped.pptx"); const qualityReport = join(root, "quality-report.json");
       await writeFile(image, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64")); await writeFile(qualityReport, JSON.stringify(passingQuality));
       const report = await exportEditablePptx({ schemaVersion: 1, title: "Crop", slides: [{ id: "s1", width: 1000, height: 500, objects: [{ id: "hero", sourceId: "hero", sourceKind: "dom", type: "image", x: 100, y: 50, width: 600, height: 300, zIndex: 1, native: true, path: image, fit: "cover", crop: { x: 0.25, y: 0.1, width: 0.5, height: 0.8 }, rotation: -5, alt: "Hero crop", layoutSlot: "hero" }] }] }, output, { qualityReport });
-      expect(report.limitations.join(" ")).toMatch(/not exported|static frames/i); expect(report.qualityReport).toBe(qualityReport); expect(report.objectInventory[0]?.media?.layoutSlot).toBe("hero"); expect(report.artifactHashes?.qualityReport).toBeDefined();
+      expect(report.limitations.join(" ")).toMatch(/not exported|static frames/i); expect(report.qualityReport).toBe(qualityReport); expect(report.objectInventory[0]?.media?.layoutSlot).toBe("hero"); expect(report.artifactHashes?.qualityReport).toBeDefined(); expect(report.standard).toMatchObject({ standard: "ISO/IEC 29500", conformance: "transitional", packageValidated: true }); expect(report.standard.checkedParts).toBeGreaterThan(10);
       const unzip = spawnSync("python3", ["-c", "import sys,zipfile;print(zipfile.ZipFile(sys.argv[1]).read('ppt/slides/slide1.xml').decode())", output], { encoding: "utf8" });
       expect(unzip.status, unzip.stderr).toBe(0);
       expect(unzip.stdout).toContain('<a:srcRect l="25000" r="25000" t="10000" b="10000"/>');

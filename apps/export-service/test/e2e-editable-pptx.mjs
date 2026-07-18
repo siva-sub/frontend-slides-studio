@@ -17,6 +17,7 @@ const graph = { schemaVersion: 1, title: "Editable object graph smoke", slides: 
 await writeFile(qualityReport, JSON.stringify({ schemaVersion: 1, id: "editable-quality", canvas: { width: 1920, height: 1080 }, mode: "canonical", strict: true, issues: [], passed: true, summary: { total: 0, info: 0, warning: 0, error: 0, critical: 0, hard: 0 } }));
 const report = await exportEditablePptx(graph, output, { qualityReport });
 if (report.nativeObjects !== 4 || report.fallbackObjects !== 1) throw new Error(`Unexpected inventory: ${JSON.stringify(report)}`);
+if (report.standard?.standard !== "ISO/IEC 29500" || report.standard?.conformance !== "transitional" || report.standard?.packageValidated !== true) throw new Error(`Missing ISO/IEC 29500 conformance evidence: ${JSON.stringify(report.standard)}`);
 if (!report.limitations.some((item) => item.includes("native PowerPoint animation"))) throw new Error("Motion-loss limitation is missing from editable report");
 if (!report.manualVisualReviewRequired || report.status !== "rendered_pending_manual_review") throw new Error(`Editable evidence gate is incomplete: ${report.status}`);
 if (report.qualityReport !== qualityReport || !report.artifactHashes?.qualityReport || report.objectInventory.length !== 5) throw new Error(`Editable evidence inventory is incomplete: ${JSON.stringify(report)}`);

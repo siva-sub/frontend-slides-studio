@@ -76,7 +76,7 @@ try {
   await page.getByRole("button", { name: "Attach folder" }).click();
   await page.locator(".workspace-meta").filter({ hasText: "Folder workspace attached" }).waitFor();
   await page.locator(".mode-switch").getByRole("button", { name: /^move/i }).click();
-  const frame = page.frames().find((candidate) => candidate !== page.mainFrame());
+  const frame = page.frames().find((candidate) => candidate.name() === "studio-preview");
   assert(frame, "Studio preview iframe was not created");
   await frame.waitForFunction(() => document.documentElement.dataset.studioMode === "move");
   await frame.locator("img").click();

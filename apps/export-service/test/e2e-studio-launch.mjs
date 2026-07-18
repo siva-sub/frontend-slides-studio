@@ -55,7 +55,7 @@ try {
   await page.getByText("launch-deck.html", { exact: true }).waitFor({ timeout: 10_000 });
   assert(await page.locator("#export-source-path").inputValue() === sourcePath, "Studio did not prefill the service-visible source path");
   await page.locator(".mode-switch").getByRole("button", { name: /^edit/i }).click();
-  const frame = page.frames().find((candidate) => candidate !== page.mainFrame());
+  const frame = page.frames().find((candidate) => candidate.name() === "studio-preview");
   assert(frame, "Studio preview iframe was not created");
   await frame.locator("h1").click();
   const editor = page.locator('.inspector-section textarea[placeholder="Replace selected text"]');

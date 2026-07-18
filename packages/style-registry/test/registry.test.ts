@@ -60,6 +60,16 @@ describe("registry counts and shape", () => {
     }
   });
 
+  it("derives complete deterministic preview palettes and font stacks for every style", () => {
+    for (const style of STYLES) {
+      for (const key of ["paper", "paper2", "ink", "muted", "rule", "accent", "accentTint", "link"] as const) expect(style.palette[key]).toMatch(/^#[0-9A-F]{6}$/);
+      expect(style.fonts.title).toBeTruthy();
+      expect(style.fonts.body).toBeTruthy();
+      expect(style.fonts.mono).toBeTruthy();
+      expect(style.palette.paper).not.toBe(style.palette.ink);
+    }
+  });
+
   it("uses compound ${styleId}/${layoutId} layout ids that are globally unique", () => {
     const ids = LAYOUTS.map((layout) => layout.id);
     expect(new Set(ids).size).toBe(ids.length);

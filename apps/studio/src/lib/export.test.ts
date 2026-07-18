@@ -24,5 +24,6 @@ describe("Studio export client", () => {
   it("rejects non-loopback services and unsaved paths", async () => {
     await expect(submitExportJob({ source: "", format: "pdf", qualityGate: "report", qualityMode: "canonical" }, { service: "http://127.0.0.1:4317", token: "secret" })).rejects.toThrow(/source path/);
     await expect(submitExportJob({ source: "/deck.html", format: "pdf", qualityGate: "report", qualityMode: "canonical" }, { service: "https://example.com", token: "secret" })).rejects.toThrow(/loopback/);
+    await expect(submitExportJob({ source: "/deck.html", format: "editable-pptx", qualityGate: "report", qualityMode: "canonical" }, { service: "http://127.0.0.1:4317", token: "secret" })).rejects.toThrow(/strict quality gate/);
   });
 });

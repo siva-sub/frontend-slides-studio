@@ -1,4 +1,4 @@
-export type ExportFormat = "pdf" | "pptx";
+export type ExportFormat = "pdf" | "pptx" | "editable-pptx";
 export type ExportQualityGate = "off" | "report" | "strict";
 export type ExportQualityMode = "canonical" | "imported";
 
@@ -12,6 +12,8 @@ export interface ExportJob {
   error?: string;
   qualityReport?: string;
   qualityPassed?: boolean;
+  exportReport?: string;
+  editableStatus?: string;
 }
 
 export interface ExportServiceOptions {
@@ -41,6 +43,7 @@ async function responseJson(response: Response): Promise<unknown> {
 export async function submitExportJob(input: { source: string; format: ExportFormat; qualityGate: ExportQualityGate; qualityMode: ExportQualityMode }, options: ExportServiceOptions): Promise<ExportJob> {
   const source = input.source.trim();
   if (!source) throw new Error("Enter a service-visible source path after saving the deck.");
+  if (input.format === "editable-pptx" && input.qualityGate !== "strict") throw new Error("Editable PPTX requires the strict quality gate.");
   if (!options.token.trim()) throw new Error("A local export service token is required.");
   const response = await fetch(serviceUrl(options.service, "/jobs"), {
     method: "POST",
