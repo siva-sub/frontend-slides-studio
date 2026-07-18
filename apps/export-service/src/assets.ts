@@ -254,7 +254,9 @@ export function registerAssetRoutes(app: FastifyInstance, options: AssetRouteOpt
 
   app.get<{ Params: { id: string } }>("/asset-jobs/:id", async (request, reply) => {
     const record = jobs.get(request.params.id);
-    return record ? publicJob(record) : reply.code(404).send({ error: "asset job not found" });
+    if (!record) return reply.code(404).send({ error: "asset job not found" });
+    if (record.job.status === "complete" || record.job.status === "failed") await record.writeChain;
+    return publicJob(record);
   });
 
   app.get<{ Params: { id: string; "*": string } }>("/asset-jobs/:id/artifacts/*", async (request, reply) => {
