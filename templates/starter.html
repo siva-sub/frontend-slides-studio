@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Frontend Slides Studio deck</title>
+<style>
+:root{--stage-w:1920;--stage-h:1080;--paper:#f3f0e8;--ink:#1d251f;--accent:#f05a36}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111}.deck-viewport{position:fixed;inset:0;overflow:hidden}.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:top left;background:var(--paper)}.slide{position:absolute;inset:0;width:1920px;height:1080px;padding:110px;visibility:hidden;opacity:0;pointer-events:none;background:var(--paper);color:var(--ink)}.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto}.eyebrow{font:700 20px/1 monospace;letter-spacing:.2em;color:var(--accent)}h1{font:600 132px/.92 Georgia,serif;max-width:1200px;margin:190px 0 32px}p{font:500 31px/1.5 sans-serif;max-width:760px}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="deck-viewport"><main class="deck-stage">
+<section class="slide active visible" data-slide-id="slide-01"><span class="eyebrow" data-object-id="slide-01-eyebrow">FRONTEND SLIDES STUDIO</span><h1 data-object-id="slide-01-title">A deck that keeps its source.</h1><p data-object-id="slide-01-body">Author in HTML. Present with motion. Export through a deterministic settled state.</p></section>
+</main></div>
+<script type="application/json" data-deck-goal>{"schemaVersion":1,"id":"starter","title":"Starter","slides":[{"id":"slide-01","renderMode":"html","role":"cover"}]}</script>
+<script>const stage=document.querySelector('.deck-stage');const fit=()=>{const s=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`scale(${s})`;stage.style.left=`${(innerWidth-1920*s)/2}px`;stage.style.top=`${(innerHeight-1080*s)/2}px`};addEventListener('resize',fit);fit();</script>
+</body>
+</html>

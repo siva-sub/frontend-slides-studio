@@ -1,0 +1,15 @@
+{
+  "name": "@slides-studio/quality",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/report.js",
+  "types": "dist/report.d.ts",
+  "exports": {
+    ".": { "types": "./dist/report.d.ts", "import": "./dist/report.js" },
+    "./browser": { "types": "./dist/browser.d.ts", "import": "./dist/browser.js" },
+    "./static": { "types": "./dist/static.d.ts", "import": "./dist/static.js" }
+  },
+  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit", "test": "vitest run" },
+  "dependencies": { "@slides-studio/protocol": "workspace:*", "linkedom": "^0.18.9" },
+  "devDependencies": { "happy-dom": "^18.0.1", "typescript": "^5.8.3", "vitest": "^3.2.3" }
+}
