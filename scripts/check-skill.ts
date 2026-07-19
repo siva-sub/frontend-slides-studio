@@ -25,6 +25,7 @@ for (const required of [
   "references/setup.md",
   "references/commands.md",
   "references/studio-controls.md",
+  "references/pptx-native.md",
   "references/troubleshooting.md",
   "pnpm studio:open",
   "pnpm cli --",

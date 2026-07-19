@@ -36,6 +36,7 @@ The authenticated launch URL loads the configured deck automatically. The editor
 - **Geometry / Layer:** nudge and order the selected object.
 - **Object motion:** choose reveal, fade, slide, scale, draw, focus, loop, blur, wipe, rotate, pulse, or stagger; set duration, delay, and replay; apply or remove.
 - **Page transition:** choose none, crossfade, slide, zoom, circle reveal, clip wipe, pixel grid/bars, or vertical/horizontal slices; set duration, target entrance fraction, and reduced-motion policy.
+- **Native PowerPoint shape:** choose any externally validated preset and insert it with stable `data-pptx-shape` metadata. The browser preview uses CSS; editable PPTX uses native OOXML geometry. Read `pptx-native.md` for advanced attributes.
 - **Rendered audit:** runs a current-page non-strict browser audit and lets the operator focus an issue on canvas.
 - **Evidence-gated export:** requires a saved absolute source path, the loopback service, token, format, and quality gate. Export is disabled while the deck is dirty.
 </inspector>

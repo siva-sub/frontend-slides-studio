@@ -2,12 +2,12 @@ import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { createHash } from "node:crypto";
 import { platform } from "node:os";
-import { basename, dirname, extname, join, posix, resolve } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import JSZip from "jszip";
 import { parseHTML } from "linkedom";
 import PptxGenJS from "pptxgenjs";
 import { computePlacement, detectImageDimensions, sniffMime } from "@slides-studio/media-kit";
+import { normalizeGeneratedPptxPackage, resolveNativeShapePreset, validatePptxPackage, type NativeShapeGradientTransform } from "@slides-studio/pptx-compat";
 import { parsePresentationObjectGraph, summarizeGraph, type ImageObject, type PresentationObjectGraphV1, type PresentationObject } from "@slides-studio/presentation-objects";
 import { qualityReportSchema } from "@slides-studio/protocol";
 
@@ -15,76 +15,24 @@ export interface RasterSlideInput { id: string; imagePath: string; overlays?: Ar
 export interface ArtifactDigest { algorithm: "sha256"; value: string; }
 export interface PptxObjectInventoryItem { slideId: string; objectId: string; type: PresentationObject["type"]; native: boolean; fallbackReason?: string; media?: Pick<ImageObject, "fit" | "crop" | "focal" | "pan" | "zoom" | "rotation" | "alt" | "layoutSlot" | "sourceDimensions">; }
 export interface PptxStandardEvidence { standard: "ISO/IEC 29500"; conformance: "transitional"; packageValidated: true; checkedParts: number; checkedRelationships: number; }
-export interface PptxExportReport { status: "generated" | "unverified" | "rendered_pending_manual_review" | "passed"; mode: "raster" | "editable"; output: string; slideCount: number; nativeObjects: number; fallbackObjects: number; fallbackReasons: Record<string, number>; objectInventory: PptxObjectInventoryItem[]; limitations: string[]; standard: PptxStandardEvidence; qualityReport?: string; artifactHashes?: { output: ArtifactDigest; renderEvidence?: ArtifactDigest; qualityReport?: ArtifactDigest }; generatedAt: string; renderBackend?: string; renderEvidence?: string; manualVisualReviewRequired: boolean; manualReview?: { reviewer: string; reviewedAt: string; evidence: string }; }
+export interface PptxExportReport { status: "generated" | "unverified" | "rendered_pending_manual_review" | "passed"; mode: "raster" | "editable"; output: string; slideCount: number; nativeObjects: number; fallbackObjects: number; fallbackReasons: Record<string, number>; objectInventory: PptxObjectInventoryItem[]; limitations: string[]; nativeTransitions?: number; speakerNotes?: number; transitionDowngrades?: Array<{ slideId: string; sourceKind: string; nativeKind: string; reason: string }>; standard: PptxStandardEvidence; qualityReport?: string; artifactHashes?: { output: ArtifactDigest; renderEvidence?: ArtifactDigest; qualityReport?: ArtifactDigest }; generatedAt: string; renderBackend?: string; renderEvidence?: string; manualVisualReviewRequired: boolean; manualReview?: { reviewer: string; reviewedAt: string; evidence: string }; }
 
 const STATIC_MOTION_LIMITATION = "HTML page transitions and object motion are settled to static frames; native PowerPoint animation is not exported.";
+const EDITABLE_MOTION_LIMITATION = "HTML object motion is settled to static frames; supported slide transitions are mapped to native PowerPoint transition XML.";
 const MISSING_QUALITY_LIMITATION = "No passing quality report is bound to this editable artifact; manual approval is disabled.";
 
 async function digestFile(path: string): Promise<ArtifactDigest> { return { algorithm: "sha256", value: createHash("sha256").update(await readFile(path)).digest("hex") }; }
 async function assertDigest(path: string, expected: ArtifactDigest, label: string): Promise<void> { const actual = await digestFile(path); if (actual.value !== expected.value) throw new Error(`${label} changed after render-back; regenerate evidence before approval`); }
 async function assertArtifactMagic(path: string, kind: "pptx" | "pdf"): Promise<void> { const bytes = await readFile(path); const valid = kind === "pptx" ? bytes[0] === 0x50 && bytes[1] === 0x4b : bytes.subarray(0, 5).toString() === "%PDF-"; if (!valid) throw new Error(`${kind.toUpperCase()} evidence has an invalid file signature`); }
 
-function relationshipOwner(path: string): string {
-  if (path === "_rels/.rels") return "";
-  const marker = "/_rels/"; const index = path.indexOf(marker);
-  if (index < 0 || !path.endsWith(".rels")) throw new Error(`invalid Open XML relationship part: ${path}`);
-  return posix.join(path.slice(0, index), posix.basename(path, ".rels"));
-}
-
-function relationshipAttributes(tag: string): Record<string, string> {
-  return Object.fromEntries([...tag.matchAll(/([A-Za-z][\w:]*)="([^"]*)"/g)].map((match) => [match[1]!, match[2]!]));
-}
-
-// PptxGenJS emits auto-generated notes parts that fail external schema/relationship checks.
-// Studio has no authored-notes contract yet, so removing that unused package surface is intentional.
-async function stripGeneratedNotesPackage(path: string): Promise<void> {
-  const archive = await JSZip.loadAsync(await readFile(path), { checkCRC32: true });
-  const removeNotesRelationships = async (relationshipPath: string): Promise<void> => {
-    const entry = archive.file(relationshipPath);
-    if (!entry) return;
-    const xml = await entry.async("string");
-    archive.file(relationshipPath, xml.replace(/<Relationship\b[^>]*Type="[^"]*\/(?:notesMaster|notesSlide)"[^>]*\/>/g, ""));
-  };
-  const presentation = archive.file("ppt/presentation.xml");
-  if (presentation) archive.file("ppt/presentation.xml", (await presentation.async("string")).replace(/<p:notesMasterIdLst\b[^>]*>[\s\S]*?<\/p:notesMasterIdLst>/g, ""));
-  const contentTypes = archive.file("[Content_Types].xml");
-  if (contentTypes) archive.file("[Content_Types].xml", (await contentTypes.async("string")).replace(/<Override\b[^>]*PartName="\/ppt\/(?:notesMasters|notesSlides)\/[^\"]+"[^>]*\/>/g, ""));
-  await removeNotesRelationships("ppt/_rels/presentation.xml.rels");
-  for (const relationshipPath of Object.keys(archive.files).filter((entry) => /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(entry))) await removeNotesRelationships(relationshipPath);
-  for (const relationshipPath of Object.keys(archive.files).filter((entry) => entry.endsWith(".rels"))) {
-    const relationshipPart = archive.file(relationshipPath);
-    if (!relationshipPart) continue;
-    const xml = await relationshipPart.async("string");
-    archive.file(relationshipPath, xml.replace(/><Relationship\b/g, ">\n<Relationship").replace(/><\/Relationships>/g, ">\n</Relationships>"));
-  }
-  archive.remove("ppt/notesMasters");
-  archive.remove("ppt/notesSlides");
-  await writeFile(path, await archive.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
-}
-
 export async function validatePptxOpenXmlPackage(path: string): Promise<PptxStandardEvidence> {
-  const archive = await JSZip.loadAsync(await readFile(path), { checkCRC32: true });
-  const parts = new Set(Object.entries(archive.files).filter(([, entry]) => !entry.dir).map(([name]) => name));
-  for (const required of ["[Content_Types].xml", "_rels/.rels", "ppt/presentation.xml", "ppt/_rels/presentation.xml.rels"]) if (!parts.has(required)) throw new Error(`ISO/IEC 29500 package is missing ${required}`);
-  const contentTypes = await archive.file("[Content_Types].xml")!.async("string");
-  if (!contentTypes.includes("application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml")) throw new Error("ISO/IEC 29500 presentation content type is missing");
-  const presentation = await archive.file("ppt/presentation.xml")!.async("string");
-  if (!presentation.includes("http://schemas.openxmlformats.org/presentationml/2006/main")) throw new Error("PPTX is not an ISO/IEC 29500 Transitional presentation package");
-  const slideParts = [...parts].filter((part) => /^ppt\/slides\/slide\d+\.xml$/.test(part));
-  if (slideParts.length === 0) throw new Error("ISO/IEC 29500 package contains no slide parts");
-  let checkedRelationships = 0;
-  for (const relationshipPath of [...parts].filter((part) => part.endsWith(".rels"))) {
-    const owner = relationshipOwner(relationshipPath); const base = owner ? posix.dirname(owner) : "";
-    const xml = await archive.file(relationshipPath)!.async("string");
-    for (const match of xml.matchAll(/<Relationship\b[^>]*\/>/g)) {
-      const attributes = relationshipAttributes(match[0]);
-      if (!attributes.Target || attributes.TargetMode === "External") continue;
-      const target = posix.normalize(posix.join(base, decodeURIComponent(attributes.Target.replace(/^\//, ""))));
-      if (target.startsWith("../") || !parts.has(target)) throw new Error(`ISO/IEC 29500 relationship ${relationshipPath} points to missing part ${target}`);
-      checkedRelationships += 1;
-    }
+  const report = await validatePptxPackage(path);
+  if (!report.valid) {
+    const diagnostics = report.issues.filter((entry) => entry.severity === "error").slice(0, 32).map((entry) => `${entry.category}${entry.path ? ` ${entry.path}` : ""}: ${entry.message}`).join("; ");
+    throw new Error(`ISO/IEC 29500 Transitional package compatibility failed: ${diagnostics}`);
   }
-  return { standard: "ISO/IEC 29500", conformance: "transitional", packageValidated: true, checkedParts: parts.size, checkedRelationships };
+  if (report.slideCount === 0) throw new Error("ISO/IEC 29500 package contains no slide parts");
+  return { standard: "ISO/IEC 29500", conformance: "transitional", packageValidated: true, checkedParts: report.checkedParts, checkedRelationships: report.checkedRelationships };
 }
 
 async function validatePassingQualityReport(path: string): Promise<void> {
@@ -170,7 +118,7 @@ async function imageOptions(object: ImageObject, slideWidth: number, slideHeight
 export async function exportRasterPptx(slides: RasterSlideInput[], output: string, options: { qualityReport?: string } = {}): Promise<PptxExportReport> {
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.author = "Frontend Slides Studio"; pptx.subject = "Raster presentation — not natively editable"; pptx.title = "Frontend Slides Studio raster export"; pptx.company = "siva-sub";
   for (const input of slides) { const slide = pptx.addSlide(); slide.background = { color: "111111" }; slide.addImage({ path: input.imagePath, x: 0, y: 0, w: 13.333, h: 7.5 }); for (const overlay of input.overlays ?? []) slide.addImage({ path: overlay.path, x: overlay.x * 13.333, y: overlay.y * 7.5, w: overlay.width * 13.333, h: overlay.height * 7.5 }); }
-  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await stripGeneratedNotesPackage(output);
+  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await normalizeGeneratedPptxPackage(output, { stripUnusedNotes: true });
   const standard = await validatePptxOpenXmlPackage(output);
   const qualityPath = options.qualityReport ? resolve(options.qualityReport) : undefined;
   const report: PptxExportReport = { status: "generated", mode: "raster", output: resolve(output), slideCount: slides.length, nativeObjects: 0, fallbackObjects: slides.length, fallbackReasons: { "frozen full-slide image": slides.length }, objectInventory: [], limitations: ["Raster PPTX slides are frozen full-slide images and are not natively editable.", STATIC_MOTION_LIMITATION], standard, ...(qualityPath ? { qualityReport: qualityPath } : {}), artifactHashes: { output: await digestFile(output), ...(qualityPath ? { qualityReport: await digestFile(qualityPath) } : {}) }, generatedAt: new Date().toISOString(), manualVisualReviewRequired: false };
@@ -181,12 +129,39 @@ export async function exportEditablePptx(graph: PresentationObjectGraphV1, outpu
   graph = parsePresentationObjectGraph(graph);
   const qualityPath = options.qualityReport ? resolve(options.qualityReport) : undefined; if (qualityPath) await validatePassingQualityReport(qualityPath);
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.author = "Frontend Slides Studio"; pptx.title = graph.title;
-  for (const input of graph.slides) {
+  const authoredNoteCount = graph.slides.filter((slide) => slide.notes !== undefined).length;
+  const nativeTransitions = new Map<number, NonNullable<PresentationObjectGraphV1["slides"][number]["nativeTransition"]>>();
+  const shapeGradients: NativeShapeGradientTransform[] = [];
+  const transitionDowngrades: NonNullable<PptxExportReport["transitionDowngrades"]> = [];
+  for (const [slideIndex, input] of graph.slides.entries()) {
     const slide = pptx.addSlide();
+    if (input.notes !== undefined) slide.addNotes(input.notes);
+    if (input.nativeTransition) nativeTransitions.set(slideIndex + 1, input.nativeTransition);
+    if (input.transitionMapping && !input.transitionMapping.exact) transitionDowngrades.push({ slideId: input.id, sourceKind: input.transitionMapping.sourceKind, nativeKind: input.transitionMapping.transition.kind, reason: input.transitionMapping.reason ?? "native transition differs from the HTML transition" });
     for (const object of input.objects.toSorted((left, right) => left.zIndex - right.zIndex)) {
       const box = inchBox(object, input.width, input.height);
       if (object.type === "text") slide.addText(object.text, { ...box, objectName: object.id, ...(object.fontFace ? { fontFace: object.fontFace } : {}), fontSize: object.fontSize ?? 18, color: cleanColor(object.color), ...(object.bold !== undefined ? { bold: object.bold } : {}), ...(object.align ? { align: object.align } : {}), margin: 0, breakLine: false, fit: "shrink" });
-      else if (object.type === "shape") slide.addShape(object.shape === "ellipse" ? pptx.ShapeType.ellipse : object.shape === "rounded-rectangle" ? pptx.ShapeType.roundRect : object.shape === "line" ? pptx.ShapeType.line : pptx.ShapeType.rect, { ...box, objectName: object.id, fill: { color: cleanColor(object.fill), transparency: object.fill ? 0 : 100 }, line: { color: cleanColor(object.stroke), width: 1 } });
+      else if (object.type === "shape") {
+        const resolvedShape = resolveNativeShapePreset(object.shape);
+        if (!resolvedShape) throw new Error(`Shape ${object.id} uses unsupported native preset ${object.shape}`);
+        const fillColor = object.gradient?.stops[0]?.color ?? object.fill;
+        const fill = { color: cleanColor(fillColor), transparency: object.fillTransparency ?? (fillColor ? 0 : 100) };
+        const line = { color: cleanColor(object.stroke), width: object.lineWidth ?? 1, transparency: object.lineTransparency ?? (object.stroke ? 0 : 100), ...(object.lineDash ? { dashType: object.lineDash } : {}), ...(object.beginArrow ? { beginArrowType: object.beginArrow } : {}), ...(object.endArrow ? { endArrowType: object.endArrow } : {}) };
+        const common = { ...box, objectName: object.id, fill, line, ...(object.rotation !== undefined ? { rotate: object.rotation } : {}), ...(object.flipH !== undefined ? { flipH: object.flipH } : {}), ...(object.flipV !== undefined ? { flipV: object.flipV } : {}), ...(object.radius !== undefined ? { rectRadius: object.radius } : {}), ...(object.hyperlink ? { hyperlink: object.hyperlink } : {}) };
+        if (object.text !== undefined) slide.addText(object.text, { ...common, shape: resolvedShape.preset as PptxGenJS.ShapeType, fontFace: object.fontFace ?? "Arial", fontSize: object.fontSize ?? 18, color: cleanColor(object.textColor), bold: object.bold ?? false, align: object.align ?? "center", valign: "middle", margin: 0, fit: "shrink" });
+        else slide.addShape(resolvedShape.preset as PptxGenJS.ShapeType, common);
+        if (object.gradient) shapeGradients.push({ slideNumber: slideIndex + 1, objectName: object.id, angle: object.gradient.angle, stops: object.gradient.stops });
+      }
+      else if (object.type === "table") {
+        const rows = object.rows.map((row) => row.map((cell) => ({ text: cell.text, options: { ...(cell.fill ? { fill: { color: cleanColor(cell.fill) } } : {}), ...(cell.color ? { color: cleanColor(cell.color) } : {}), ...(cell.bold !== undefined ? { bold: cell.bold } : {}), ...(cell.align ? { align: cell.align } : {}), ...(cell.colspan ? { colspan: cell.colspan } : {}), ...(cell.rowspan ? { rowspan: cell.rowspan } : {}), margin: 4 } })));
+        const totalColumnWeight = object.columnWidths?.reduce((sum, value) => sum + value, 0); const totalRowWeight = object.rowHeights?.reduce((sum, value) => sum + value, 0);
+        slide.addTable(rows, { ...box, objectName: object.id, fontFace: object.fontFace ?? "Arial", fontSize: object.fontSize ?? 14, border: { color: cleanColor(object.borderColor), pt: object.borderWidth ?? 1 }, ...(object.columnWidths && totalColumnWeight ? { colW: object.columnWidths.map((value) => box.w * value / totalColumnWeight) } : {}), ...(object.rowHeights && totalRowWeight ? { rowH: object.rowHeights.map((value) => box.h * value / totalRowWeight) } : {}) });
+      }
+      else if (object.type === "chart") {
+        const baseType = object.chartType.startsWith("bar") ? pptx.ChartType.bar : object.chartType.startsWith("line") ? pptx.ChartType.line : object.chartType === "pie" ? pptx.ChartType.pie : object.chartType === "doughnut" ? pptx.ChartType.doughnut : object.chartType.startsWith("area") ? pptx.ChartType.area : pptx.ChartType.radar;
+        const chartOptions = { ...box, objectName: object.id, showLegend: object.showLegend ?? object.series.length > 1, showValue: object.showValue ?? false, showCategoryName: object.showCategoryName ?? false, ...(object.title ? { showTitle: true, title: object.title } : {}), ...(object.colors ? { chartColors: object.colors.map(cleanColor) } : {}), ...(object.chartType === "barHorizontal" ? { barDir: "bar" } : object.chartType.startsWith("bar") ? { barDir: "col" } : {}), ...(["barStacked", "lineStacked", "areaStacked"].includes(object.chartType) ? { grouping: "stacked" } : {}), ...(["barStacked100", "areaStacked100"].includes(object.chartType) ? { grouping: "percentStacked" } : {}), ...(object.chartType === "radarFilled" ? { radarStyle: "filled" } : {}), showMarker: object.chartType === "lineMarkers" } as PptxGenJS.IChartOpts;
+        slide.addChart(baseType, object.series.map((series) => ({ name: series.name, labels: series.labels, values: series.values, ...(series.color ? { color: cleanColor(series.color) } : {}) })), chartOptions);
+      }
       else if (object.type === "image") slide.addImage({ path: object.path, ...(await imageOptions(object, input.width, input.height)) });
       else if (object.type === "raster-region") slide.addImage({ path: object.path, objectName: object.id, ...box });
       else if (object.type === "svg") slide.addImage({ data: `data:image/svg+xml;base64,${Buffer.from(object.svg).toString("base64")}`, objectName: object.id, ...box });
@@ -196,11 +171,11 @@ export async function exportEditablePptx(graph: PresentationObjectGraphV1, outpu
       }
     }
   }
-  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await stripGeneratedNotesPackage(output);
+  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await normalizeGeneratedPptxPackage(output, { stripUnusedNotes: authoredNoteCount === 0, repairAuthoredNotes: authoredNoteCount > 0, transitions: nativeTransitions, shapeGradients });
   const standard = await validatePptxOpenXmlPackage(output);
   const summary = summarizeGraph(graph); const backend = detectRenderBackend(); const renderEvidence = backend ? await renderBackPptx(output, backend) : undefined;
   const artifactHashes = { output: await digestFile(output), ...(renderEvidence ? { renderEvidence: await digestFile(renderEvidence) } : {}), ...(qualityPath ? { qualityReport: await digestFile(qualityPath) } : {}) };
-  const report: PptxExportReport = { status: renderEvidence && qualityPath ? "rendered_pending_manual_review" : "unverified", mode: "editable", output: resolve(output), slideCount: graph.slides.length, nativeObjects: summary.native, fallbackObjects: summary.fallback, fallbackReasons: summary.reasons, objectInventory: inventoryFor(graph), limitations: [STATIC_MOTION_LIMITATION, "Unsupported HTML/CSS effects remain explicit regional raster fallbacks.", ...(!qualityPath ? [MISSING_QUALITY_LIMITATION] : [])], standard, ...(qualityPath ? { qualityReport: qualityPath } : {}), artifactHashes, generatedAt: new Date().toISOString(), ...(backend ? { renderBackend: backend } : {}), ...(renderEvidence ? { renderEvidence } : {}), manualVisualReviewRequired: true };
+  const report: PptxExportReport = { status: renderEvidence && qualityPath ? "rendered_pending_manual_review" : "unverified", mode: "editable", output: resolve(output), slideCount: graph.slides.length, nativeObjects: summary.native, fallbackObjects: summary.fallback, fallbackReasons: summary.reasons, objectInventory: inventoryFor(graph), limitations: [EDITABLE_MOTION_LIMITATION, "Unsupported HTML/CSS effects remain explicit regional raster fallbacks.", ...transitionDowngrades.map((item) => item.reason), ...(!qualityPath ? [MISSING_QUALITY_LIMITATION] : [])], nativeTransitions: [...nativeTransitions.values()].filter((transition) => transition.kind !== "none").length, ...(authoredNoteCount ? { speakerNotes: authoredNoteCount } : {}), ...(transitionDowngrades.length ? { transitionDowngrades } : {}), standard, ...(qualityPath ? { qualityReport: qualityPath } : {}), artifactHashes, generatedAt: new Date().toISOString(), ...(backend ? { renderBackend: backend } : {}), ...(renderEvidence ? { renderEvidence } : {}), manualVisualReviewRequired: true };
   await writeFile(`${output}.report.json`, JSON.stringify(report, null, 2)); return report;
 }
 
@@ -227,7 +202,7 @@ export async function approveEditablePptx(reportPath: string, evidence: { review
   await assertDigest(raw.output, raw.artifactHashes.output, "PPTX output"); await assertDigest(raw.renderEvidence, raw.artifactHashes.renderEvidence, "Render-back evidence"); await assertDigest(raw.qualityReport, raw.artifactHashes.qualityReport, "Quality report");
   if (!evidence.reviewer.trim() || !evidence.evidence.trim()) throw new Error("Reviewer and visual evidence are required");
   const limitations = Array.isArray(raw.limitations) ? [...raw.limitations] : [];
-  if (!limitations.includes(STATIC_MOTION_LIMITATION)) limitations.push(STATIC_MOTION_LIMITATION);
+  if (!limitations.includes(EDITABLE_MOTION_LIMITATION)) limitations.push(EDITABLE_MOTION_LIMITATION);
   const report = { ...raw, objectInventory: raw.objectInventory ?? [], generatedAt: raw.generatedAt ?? new Date().toISOString(), limitations } as PptxExportReport;
   const approved: PptxExportReport = { ...report, status: "passed", manualVisualReviewRequired: false, manualReview: { reviewer: evidence.reviewer.trim(), evidence: evidence.evidence.trim(), reviewedAt: new Date().toISOString() } };
   await writeFile(reportPath, JSON.stringify(approved, null, 2)); return approved;

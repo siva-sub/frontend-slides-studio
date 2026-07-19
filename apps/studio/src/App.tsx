@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { stageBrowserMedia, type BrowserDirectoryHandle } from "@slides-studio/media-kit";
+import { NATIVE_SHAPE_PRESETS } from "@slides-studio/pptx-compat/browser";
 import { parseStudioMessage, type MotionProgramV1, type QualityReport, type StudioMessage, type TransitionSpecV1 } from "@slides-studio/protocol";
 import { inspectRecipe, inspectStyle, listRecipes, listStyles } from "@slides-studio/style-registry";
 import { injectStudioBridge } from "./lib/bridge";
@@ -22,6 +23,7 @@ import {
 } from "./lib/media";
 import { normalizeDeck } from "./lib/normalizeDeck";
 import { applyObjectMotion, applySlideTransition, createMotionTrack, readMotionProgram, readSlideTransition, removeObjectMotion, type MotionPreset } from "./lib/motion";
+import { insertNativePptxShape } from "./lib/nativeShape";
 import { changeObjectLayer, type LayerAction } from "./lib/objectOperations";
 import { revisionFor, saveSnapshot } from "./lib/storage";
 import { applyLayoutSlotToObject, applyStyleToHtml, attachLayoutToPage, type StyleApplyScope } from "./lib/style";
@@ -88,6 +90,7 @@ export function App() {
   const [authoringStatus, setAuthoringStatus] = useState("Choose a style to preview it; Apply writes visible theme CSS into the deck.");
   const [diagramJson, setDiagramJson] = useState("");
   const [diagramStatus, setDiagramStatus] = useState("Paste a DiagramSpec v1/v2 JSON document to insert editable SVG primitives.");
+  const [nativeShapePreset, setNativeShapePreset] = useState<string>("chevron");
   const [exportSourcePath, setExportSourcePath] = useState("");
   const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [exportQualityGate, setExportQualityGate] = useState<ExportQualityGate>("strict");
@@ -456,6 +459,12 @@ export function App() {
         <label htmlFor="transition-entrance">Target entrance <output>{Math.round((currentTransition.targetEntranceStartFraction ?? 0.55) * 100)}%</output></label><input id="transition-entrance" type="range" min="0" max="1" step="0.05" value={currentTransition.targetEntranceStartFraction ?? 0.55} onChange={(event) => commitPageTransition({ targetEntranceStartFraction: Number(event.target.value) })} />
         <label htmlFor="transition-reduced">Reduced motion</label><select id="transition-reduced" value={currentTransition.reducedMotion} onChange={(event) => commitPageTransition({ reducedMotion: event.target.value as TransitionSpecV1["reducedMotion"] })}><option value="fade">Fade</option><option value="crossfade">Crossfade</option><option value="skip">Skip</option><option value="none">None</option></select>
         <button className="control-button" onClick={() => { void commitDeckOperation(applySlideTransition(store.sourceHtml, store.currentSlide, null), "Clear transition"); }}>Clear override</button>
+      </div>
+      <div className="inspector-section native-shape-panel">
+        <label htmlFor="native-shape-preset">Native PowerPoint shape</label>
+        <select id="native-shape-preset" value={nativeShapePreset} onChange={(event) => setNativeShapePreset(event.target.value)}>{NATIVE_SHAPE_PRESETS.map((preset) => <option key={preset} value={preset}>{preset}</option>)}</select>
+        <button className="control-button" onClick={() => { try { const inserted = insertNativePptxShape(store.sourceHtml, store.currentSlide, nativeShapePreset); void commitDeckOperation(inserted.html, `Insert native shape ${inserted.preset}`); setImportNotice(`Inserted ${inserted.preset}. Editable PPTX preserves it as a native shape.`); } catch (error) { setImportNotice(error instanceof Error ? error.message : String(error)); } }}>Insert native shape</button>
+        <p>Preview uses CSS. Editable PPTX uses the selected OOXML preset.</p>
       </div>
       <div className="inspector-section quality-panel">
         <label>Rendered audit</label>

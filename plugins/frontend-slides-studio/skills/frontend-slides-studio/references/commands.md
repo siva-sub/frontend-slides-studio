@@ -79,11 +79,20 @@ Use `--format pptx` for raster PPTX. Use `--format editable-pptx --quality-gate 
 </export_service>
 
 <editable_pptx>
+Discover native shapes and transitions, resolve ppt-rs aliases, and validate one package:
+```bash
+pnpm cli -- pptx shapes list
+pnpm cli -- pptx shapes resolve --name flowChartOffPageConnector
+pnpm cli -- pptx transitions
+pnpm cli -- pptx validate --input deck.pptx
+```
+
 The graph command is the advanced path for callers that already have a presentation object graph:
 ```bash
 pnpm cli -- pptx editable --graph presentation-graph.json --quality-report quality-report.json --output deck.pptx
 pnpm cli -- pptx review --report deck.pptx.report.json --reviewer "Reviewer Name" --evidence "Reviewed fresh render-back."
 ```
+Read `pptx-native.md` before authoring `data-pptx-shape` HTML or native transition fields.
 </editable_pptx>
 
 <verification>
@@ -91,6 +100,7 @@ pnpm cli -- pptx review --report deck.pptx.report.json --reviewer "Reviewer Name
 pnpm check
 pnpm smoke:studio
 pnpm smoke
+pnpm check:pptx-external-compat
 ```
 </verification>
 </commands>

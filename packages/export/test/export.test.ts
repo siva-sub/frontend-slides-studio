@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import JSZip from "jszip";
+import { parseHTML } from "linkedom";
 import { describe, expect, it } from "vitest";
 import { approveEditablePptx, buildAuthorHtml, buildShareHtml, exportEditablePptx, validatePptxOpenXmlPackage } from "../src/index.js";
 
@@ -31,6 +32,19 @@ describe("HTML builds", () => {
   it("embeds runtime and metadata in author output", () => { const html = buildAuthorHtml(source, "window.x=1", { schemaVersion: 1 }); expect(html).toContain("data-deck-goal"); expect(html).toContain("window.x=1"); });
   it("strips authoring chrome, private metadata and dangerous attributes from share output", () => { const html = buildShareHtml(source, "window.x=1"); expect(html).not.toContain("data-authoring-ui"); expect(html).not.toContain("onclick"); expect(html).not.toContain("javascript:bad"); expect(html).toContain('data-slides-studio-build="share"'); });
 
+  it("preserves semantic HTML/XML text while removing executable attributes", () => {
+    const semantic = '<html><head><style>.x{color:red}</style></head><body><section class="slide"><h1>Entities &amp; Unicode ✓</h1><table><tr><td>42</td></tr></table><pre><code>1 &lt; 2</code></pre><blockquote>Quote</blockquote><img alt="Evidence" src="data:image/png;base64,AA==" onerror="bad()"><a href="javascript:bad()">unsafe</a></section></body></html>';
+    const shared = buildShareHtml(semantic, "window.runtime=true");
+    const document = parseHTML(shared).document;
+    expect(document.querySelector("h1")?.textContent).toBe("Entities & Unicode ✓");
+    expect(document.querySelector("table td")?.textContent).toBe("42");
+    expect(document.querySelector("pre code")?.textContent).toBe("1 < 2");
+    expect(document.querySelector("blockquote")?.textContent).toBe("Quote");
+    expect(document.querySelector("img")?.getAttribute("alt")).toBe("Evidence");
+    expect(shared).not.toContain("onerror");
+    expect(shared).not.toContain("javascript:bad");
+  });
+
   it("normalizes legacy limitations but rejects stale or incomplete approval evidence", async () => {
     const root = await mkdtemp(join(tmpdir(), "slides-studio-legacy-review-"));
     try {
@@ -40,7 +54,7 @@ describe("HTML builds", () => {
       const report = { status: "rendered_pending_manual_review", mode: "editable", output, slideCount: 1, nativeObjects: 2, fallbackObjects: 0, fallbackReasons: {}, qualityReport, renderEvidence, artifactHashes: { output: digest(pptxBytes), renderEvidence: digest(pdfBytes), qualityReport: digest(qualityJson) }, manualVisualReviewRequired: true };
       await writeFile(reportPath, JSON.stringify(report));
       const approved = await approveEditablePptx(reportPath, { reviewer: "Reviewer", evidence: "Viewed render.pdf" });
-      expect(approved.status).toBe("passed"); expect(approved.limitations.join(" ")).toMatch(/native PowerPoint animation/); expect(approved.qualityReport).toBe(qualityReport);
+      expect(approved.status).toBe("passed"); expect(approved.limitations.join(" ")).toMatch(/HTML object motion.*static frames/); expect(approved.qualityReport).toBe(qualityReport);
 
       const stalePath = join(root, "stale.report.json"); await writeFile(stalePath, JSON.stringify(report)); await writeFile(output, Buffer.from("PK\u0003\u0004tampered"));
       await expect(approveEditablePptx(stalePath, { reviewer: "Reviewer", evidence: "Viewed" })).rejects.toThrow(/changed after render-back/);
@@ -68,6 +82,41 @@ describe("HTML builds", () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
+  }, 30_000);
+
+  it("exports native preset shapes, gradients, hyperlinks, and slide transitions", async () => {
+    const root = await mkdtemp(join(tmpdir(), "slides-studio-export-native-shapes-"));
+    try {
+      const output = join(root, "native-shapes.pptx");
+      const report = await exportEditablePptx({ schemaVersion: 1, title: "Native", slides: [{ id: "s1", width: 1000, height: 562.5, nativeTransition: { kind: "wipe", direction: "left", durationMs: 650 }, objects: [{ id: "native-chevron", sourceId: "native-chevron", sourceKind: "dom", type: "shape", shape: "chevron", x: 100, y: 100, width: 500, height: 220, zIndex: 1, native: true, gradient: { angle: 45, stops: [{ color: "#ff0000", position: 0 }, { color: "#0000ff", position: 1, transparency: 20 }] }, stroke: "#111111", lineWidth: 2, rotation: 15, text: "Native shape", textColor: "#ffffff", bold: true, hyperlink: { url: "https://example.com", tooltip: "Example" } }] }] }, output);
+      expect(report.nativeTransitions).toBe(1);
+      expect(report.limitations.join(" ")).toMatch(/supported slide transitions.*native PowerPoint/i);
+      const archive = await JSZip.loadAsync(await readFile(output));
+      const slide = await archive.file("ppt/slides/slide1.xml")!.async("string");
+      const rels = await archive.file("ppt/slides/_rels/slide1.xml.rels")!.async("string");
+      expect(slide).toContain('<a:prstGeom prst="chevron">');
+      expect(slide).toContain("<a:gradFill");
+      expect(slide).toContain('<p:wipe dir="l"/>');
+      expect(slide).toContain('p14:dur="650"'); expect(slide).not.toContain("advTm");
+      expect(slide).toContain('name="native-chevron"');
+      expect(rels).toContain('Target="https://example.com"');
+      expect((await validatePptxOpenXmlPackage(output)).packageValidated).toBe(true);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  }, 30_000);
+
+  it("exports native tables and charts with embedded workbooks", async () => {
+    const root = await mkdtemp(join(tmpdir(), "slides-studio-export-native-data-"));
+    try {
+      const output = join(root, "native-data.pptx");
+      await exportEditablePptx({ schemaVersion: 1, title: "Native data", slides: [{ id: "s1", width: 1000, height: 562.5, notes: "Speaker notes line 1\nLine 2", objects: [
+        { id: "native-table", sourceId: "native-table", sourceKind: "dom", type: "table", x: 40, y: 60, width: 430, height: 380, zIndex: 1, native: true, rows: [[{ text: "Metric", fill: "#1d4ed8", color: "#ffffff", bold: true, rowspan: 2 }, { text: "Value", fill: "#1d4ed8", color: "#ffffff", bold: true }], [{ text: "42" }]], columnWidths: [2, 1], borderColor: "#94a3b8" },
+        { id: "native-chart", sourceId: "native-chart", sourceKind: "dom", type: "chart", x: 510, y: 60, width: 440, height: 380, zIndex: 2, native: true, chartType: "barStacked", title: "Quarterly", showLegend: true, series: [{ name: "Actual", labels: ["Q1", "Q2"], values: [10, 12], color: "#1d4ed8" }, { name: "Plan", labels: ["Q1", "Q2"], values: [8, 11], color: "#f05a36" }] },
+      ] }] }, output);
+      const archive = await JSZip.loadAsync(await readFile(output)); const slide = await archive.file("ppt/slides/slide1.xml")!.async("string"); const chart = await archive.file("ppt/charts/chart1.xml")!.async("string"); const notes = await archive.file("ppt/notesSlides/notesSlide1.xml")!.async("string");
+      expect(slide).toContain('name="native-table"'); expect(slide).toContain('name="native-chart"'); expect(chart).toContain("<c:barChart>"); expect(chart).not.toContain('axId val="2094734556"');
+      expect(Object.keys(archive.files).some((path) => path.startsWith("ppt/embeddings/") && path.endsWith(".xlsx"))).toBe(true); expect(notes).toContain("Speaker notes line 1"); expect(archive.file("ppt/theme/theme2.xml")).toBeTruthy();
+      expect((await validatePptxOpenXmlPackage(output)).packageValidated).toBe(true);
+    } finally { await rm(root, { recursive: true, force: true }); }
   }, 30_000);
 
   it("normalizes reversed connector segments to nonnegative Open XML extents", async () => {

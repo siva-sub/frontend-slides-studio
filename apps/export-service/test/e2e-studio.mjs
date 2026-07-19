@@ -71,12 +71,18 @@ try {
   await page.getByRole("button", { name: "Run page audit" }).click();
   await page.locator(".quality-status.passed").waitFor({ timeout: 10_000 });
   assert((await page.locator(".quality-status").textContent())?.includes("PASS"), "Studio rendered audit did not pass the clean page");
+  await page.locator("#native-shape-preset").selectOption("flowChartDecision");
+  await page.getByRole("button", { name: "Insert native shape" }).click();
+  frame = studioFrame(); assert(frame, "Preview disappeared after native shape insertion");
+  await frame.locator('[data-pptx-shape="flowChartDecision"]').waitFor();
+
   const diagramSpec = { schemaVersion: 1, id: "studio-flow", type: "architecture", variant: "light", direction: "ltr", theme: { paper: "#f5f5f2", paper2: "#fff", ink: "#20231f", muted: "#6f756d", rule: "#d8dbd4", accent: "#f05a36", accentTint: "#fde8e1", link: "#315f9d", titleFont: "Fraunces", bodyFont: "Manrope", monoFont: "IBM Plex Mono" }, nodes: [{ id: "a", label: "Input", kind: "step" }, { id: "b", label: "Output", kind: "store" }], edges: [{ id: "a-b", source: "a", target: "b", kind: "link" }] };
   await page.locator("#diagram-json").fill(JSON.stringify(diagramSpec));
   await page.getByRole("button", { name: "Insert validated diagram" }).click();
   await page.locator(".diagram-panel").filter({ hasText: "Inserted architecture" }).waitFor({ timeout: 10_000 });
   frame = studioFrame(); assert(frame, "Preview disappeared after diagram insertion");
   await frame.locator('[data-object-id="diagram-studio-flow"]').waitFor();
+  await frame.locator('[data-object-id="diagram-studio-flow"] script[data-diagram-spec]').waitFor({ state: "attached" });
   await page.getByRole("button", { name: "Run page audit" }).click();
   await page.locator(".quality-panel li button").first().waitFor({ timeout: 10_000 });
   await page.locator(".quality-panel li button").first().click();

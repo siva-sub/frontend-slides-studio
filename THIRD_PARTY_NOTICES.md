@@ -22,6 +22,10 @@ The adaptation extends `visual/` with letterbox-safe prepare/restore edits, the 
 
 The upstream style prompt library (32 `styles/*.md` + 32 `styles/*.layouts.json` = 256 layouts), six example recipes (`recipes/<slug>/recipe.md` + `slides_plan.md`), and the upstream `LICENSE` are imported **byte-for-byte and unchanged** under [`resources/gpt-image2-ppt-skills/`](resources/gpt-image2-ppt-skills/), with a per-file SHA-256 [`MANIFEST.json`](resources/gpt-image2-ppt-skills/MANIFEST.json) and a [`NOTICE-OF-MODIFICATIONS.md`](resources/gpt-image2-ppt-skills/NOTICE-OF-MODIFICATIONS.md). No upstream screenshots or gallery binaries are imported. The typed, browser-safe normalization into `StyleProfile` / `LayoutProfile` / `Recipe` contracts, query scoring, recipe scaffolding, and the generated style browser are original work in [`packages/style-registry`](packages/style-registry).
 
+## ppt-rs
+
+[`yingkitw/ppt-rs`](https://github.com/yingkitw/ppt-rs) commit `2e5a3f812711bfeeb729c5f7e5938c1367c3f480` is licensed under the Apache License, Version 2.0. Frontend Slides Studio adapts package-validation rules, shape-name compatibility, transition XML semantics, repair detection, and HTML/XML test invariants into original TypeScript under `packages/pptx-compat`. No Rust source is vendored. The license text is retained at [`licenses/ppt-rs-APACHE-2.0.txt`](licenses/ppt-rs-APACHE-2.0.txt).
+
 ## NextPPT
 
 Licensed under the MIT License. Frontend Slides Studio independently implements the selected behavior and records any direct source adaptation in [`provenance.json`](provenance.json).

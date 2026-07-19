@@ -131,6 +131,15 @@ pnpm cli -- export \
 
 The service binds to `127.0.0.1`, accepts only contained source paths, and returns asynchronous job state and output paths. Studio uses the same service URL, token, and absolute saved-deck path. Choose `--format pptx` for raster output or `--format editable-pptx --quality-gate strict --wait` for native objects with declared fallbacks.
 
+Discover native PowerPoint capabilities and validate a package with:
+
+```bash
+pnpm cli -- pptx shapes list
+pnpm cli -- pptx shapes resolve --name flowChartOffPageConnector
+pnpm cli -- pptx transitions
+pnpm cli -- pptx validate --input deck.pptx
+```
+
 ## Development and Verification
 
 The repository uses Node 22, pnpm 11.3, TypeScript, React/Vite, Fastify, Playwright, Vitest, and Python tooling.
@@ -143,7 +152,7 @@ pnpm smoke
 
 `pnpm check` runs builds, typechecks, unit tests, generated-data drift checks, provenance checks, clean-room checks, and integration synchronization. `pnpm smoke` exercises Studio editing, all diagram gallery renders, asset generation, motion and transitions, PDF/raster PPTX export, and editable-PPTX render-back gates.
 
-With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillow, and Poppler installed, run `pnpm check:pptx-external-compat` for the seven-artifact external compatibility matrix. It records Microsoft Open XML SDK, direct `ppt_rs::validate_package_bytes()`, repair, python-pptx, OfficeCLI render, and LibreOffice render-back evidence. See [External PPTX Compatibility](docs/pptx-external-compatibility.md).
+With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillow, and Poppler installed, run `pnpm check:pptx-external-compat` for the ten-artifact external compatibility matrix, including all native transitions, all 178 externally validated native shape presets, and editable native table/chart output. It records Microsoft Open XML SDK, direct `ppt_rs::validate_package_bytes()`, repair, python-pptx, OfficeCLI render, and LibreOffice render-back evidence. See [External PPTX Compatibility](docs/pptx-external-compatibility.md).
 
 ## Documentation
 
@@ -152,6 +161,8 @@ With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillo
 - [Architecture](docs/architecture.md)
 - [Security Model](docs/security.md)
 - [External PPTX Compatibility](docs/pptx-external-compatibility.md)
+- [ppt-rs TypeScript Adaptation Matrix](docs/ppt-rs-adaptation-matrix.md)
+- [ppt-rs Advanced Native Element Evaluation](docs/ppt-rs-advanced-elements-evaluation.md)
 - [Clean-Room Policy](docs/clean-room-dashi.md)
 - [Original Upstream README](docs/upstream-frontend-slides-readme.md)
 

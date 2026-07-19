@@ -14,6 +14,7 @@ describe("Studio diagram insertion", () => {
     expect(figure?.closest(".slide")?.getAttribute("data-slide-id")).toBe("two");
     expect(figure?.dataset.sourceId).toBe("system");
     expect(figure?.querySelector("svg")?.getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
+    expect(JSON.parse(figure?.querySelector<HTMLScriptElement>('script[data-diagram-spec]')?.textContent ?? "{}").id).toBe("system");
     const ids = Array.from(figure?.querySelectorAll("[id]") ?? [], (element) => element.id);
     expect(ids.every((id) => id.startsWith("diagram-system-"))).toBe(true);
     expect(new Set(ids).size).toBe(ids.length);

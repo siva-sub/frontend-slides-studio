@@ -51,6 +51,7 @@ export function insertDiagram(html: string, slideIndex: number, input: unknown):
   figure.setAttribute("aria-label", `${spec.type} diagram`);
   figure.style.cssText = "position:absolute;left:10%;top:16%;width:80%;height:68%;margin:0;overflow:visible";
   figure.innerHTML = namespaceSvg(renderDiagramSvg(spec), objectId);
+  const metadata = document.createElement("script"); metadata.type = "application/json"; metadata.dataset.diagramSpec = ""; metadata.textContent = JSON.stringify(spec).replace(/</g, "\\u003c"); figure.append(metadata);
   slide.append(figure);
   return { html: `<!doctype html>\n${document.documentElement.outerHTML}`, objectId, spec };
 }

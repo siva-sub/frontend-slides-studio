@@ -291,7 +291,7 @@ Run the separately provisioned external PPTX matrix with:
 pnpm check:pptx-external-compat
 ```
 
-This gate generates seven raster/editable artifacts and checks them with OfficeCLI's Microsoft Open XML SDK validator, `ppt-rs` CLI and direct APIs, its repair validator, python-pptx, OfficeCLI rendering, and LibreOffice render-back. Setup, pinned commits, evidence paths, and the documented upstream MCP-suite defect are in [External PPTX Compatibility](pptx-external-compatibility.md).
+This gate generates ten raster/editable artifacts, including every native transition, all 178 externally validated native shape presets, and editable table/chart output with an embedded workbook, and checks them with OfficeCLI's Microsoft Open XML SDK validator, `ppt-rs` CLI and direct APIs, its repair validator, python-pptx, OfficeCLI rendering, and LibreOffice render-back. Setup, pinned commits, evidence paths, and the documented upstream MCP-suite defect are in [External PPTX Compatibility](pptx-external-compatibility.md).
 
 ## Current Boundaries
 

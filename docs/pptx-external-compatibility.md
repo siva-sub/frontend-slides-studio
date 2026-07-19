@@ -62,7 +62,7 @@ pnpm check:pptx-external-compat
 
 ## Artifact matrix
 
-The gate generates and checks seven presentations:
+The gate generates and checks ten presentations:
 
 1. raster PPTX from 1280×720 HTML;
 2. raster PPTX from 1920×1080 HTML;
@@ -70,10 +70,14 @@ The gate generates and checks seven presentations:
 4. editable PPTX with un-ID'd CSS decoration preserved in a clean plate;
 5. editable PPTX with no stable object IDs and a nonblank full-slide fallback;
 6. multi-slide editable PPTX;
-7. editable PPTX with cropped and rotated media plus segmented native connectors.
+7. editable PPTX with cropped and rotated media, segmented native connectors, a native gradient, and a native transition;
+8. eight-slide editable PPTX covering every ppt-rs transition kind with the corrected Office 2010 reveal namespace;
+9. editable gallery covering all 178 externally validated native shape presets;
+10. editable native table, stacked chart, embedded XLSX workbook, and speaker-notes artifact.
 
 For every artifact it records a SHA-256 digest and runs:
 
+- the TypeScript `@slides-studio/pptx-compat` validator and repair-finding rules;
 - `officecli validate --json` using Microsoft Open XML SDK validation;
 - `officecli view ... issues --json`, outline parsing, and screenshot render;
 - `pptcli validate --json`;

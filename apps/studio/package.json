@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": { "dev": "vite", "open": "node scripts/start.mjs", "stop": "node scripts/stop.mjs", "build": "tsc -b && vite build", "typecheck": "tsc -b --pretty false", "test": "vitest run" },
-  "dependencies": { "@slides-studio/diagram-kit": "workspace:*", "@slides-studio/media-kit": "workspace:*", "@slides-studio/protocol": "workspace:*", "@slides-studio/quality": "workspace:*", "@slides-studio/style-registry": "workspace:*", "react": "^19.1.0", "react-dom": "^19.1.0", "zustand": "^5.0.5" },
+  "dependencies": { "@slides-studio/diagram-kit": "workspace:*", "@slides-studio/media-kit": "workspace:*", "@slides-studio/pptx-compat": "workspace:*", "@slides-studio/protocol": "workspace:*", "@slides-studio/quality": "workspace:*", "@slides-studio/style-registry": "workspace:*", "react": "^19.1.0", "react-dom": "^19.1.0", "zustand": "^5.0.5" },
   "devDependencies": { "@types/react": "^19.1.6", "@types/react-dom": "^19.1.5", "@vitejs/plugin-react": "^4.5.2", "happy-dom": "^18.0.1", "typescript": "^5.8.3", "vite": "^6.3.5", "vitest": "^3.2.3" }
 }

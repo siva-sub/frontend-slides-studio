@@ -43,6 +43,14 @@
       "modifications": "Ported scene, mask, asset-slot, and provider boundaries under visual/, extended with letterbox-safe prepare/restore edits, the A1/A2/B layer-route contract (validated metrics, masked A2 composite, default overlap grouping), deterministic white/black edge-contamination checks, protected-region placement, a contained evidence-bundle builder, and the non-network visual CLI -- all original work in this repository adapting the upstream technique, with no upstream binary copied. Imported the style prompt library and example recipes byte-for-byte under resources/gpt-image2-ppt-skills/ (32 styles/*.md + 32 *.layouts.json = 256 layouts, six recipes/*/recipe.md + slides_plan.md, and the upstream LICENSE), recorded in resources/gpt-image2-ppt-skills/MANIFEST.json. examples/visual-reconstruction/ is an original synthetic reconstruction example inspired by the upstream Apache technique. Normalization into the typed StyleProfile/LayoutProfile/Recipe registry contracts and generated metadata is original work in packages/style-registry."
     },
     {
+      "repository": "https://github.com/yingkitw/ppt-rs",
+      "commit": "2e5a3f812711bfeeb729c5f7e5938c1367c3f480",
+      "license": "Apache-2.0",
+      "relationship": "adapted implementation",
+      "paths": ["packages/pptx-compat", "docs/ppt-rs-adaptation-matrix.md", "docs/ppt-rs-advanced-elements-evaluation.md", "licenses/ppt-rs-APACHE-2.0.txt"],
+      "modifications": "Reimplemented applicable package validation, repair findings, native shape compatibility, transition XML, and HTML/XML test invariants in TypeScript. Corrected invalid upstream preset names and the p:reveal namespace defect. No Rust source is vendored."
+    },
+    {
       "repository": "https://github.com/chuspeeism/dashi-ppt-skill",
       "commit": "fdbb145517ea0e289000aef9b7906bcb3e0cd19a",
       "license": "AGPL-3.0 plus proprietary exporter restrictions",

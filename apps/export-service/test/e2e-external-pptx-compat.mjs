@@ -5,6 +5,7 @@ import { basename, dirname, extname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { buildServer } from "../dist/server.js";
 import { exportEditablePptx } from "../../../packages/export/dist/index.js";
+import { NATIVE_SHAPE_PRESETS, validatePptxPackage } from "../../../packages/pptx-compat/dist/index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -78,7 +79,7 @@ async function buildHarness() {
 }
 
 function pythonInspect(path) {
-  const script = `import json,sys,zipfile\nfrom pptx import Presentation\np=sys.argv[1]\nprs=Presentation(p)\nslides=[]\nfor slide in prs.slides:\n names=[]; texts=[]; rotations=[]\n for shape in slide.shapes:\n  names.append(shape.name)\n  if hasattr(shape,'text') and shape.text: texts.append(shape.text)\n  rotations.append(getattr(shape,'rotation',None))\n slides.append({'names':names,'texts':texts,'rotations':rotations})\nwith zipfile.ZipFile(p) as z:\n xml=''.join(z.read(n).decode('utf-8','replace') for n in z.namelist() if n.startswith('ppt/slides/slide') and n.endswith('.xml'))\n print(json.dumps({'slideCount':len(prs.slides),'width':prs.slide_width,'height':prs.slide_height,'ratio':prs.slide_width/prs.slide_height,'slides':slides,'xmlSignals':{'srcRectCount':xml.count('<a:srcRect'),'rotationCount':xml.count(' rot="'),'connectorNameCount':xml.count('flow-connector')}}))`;
+  const script = `import json,re,sys,zipfile\nfrom pptx import Presentation\np=sys.argv[1]\nprs=Presentation(p)\nslides=[]\nfor slide in prs.slides:\n names=[]; texts=[]; rotations=[]\n for shape in slide.shapes:\n  names.append(shape.name)\n  if hasattr(shape,'text') and shape.text: texts.append(shape.text)\n  rotations.append(getattr(shape,'rotation',None))\n try: notes=slide.notes_slide.notes_text_frame.text\n except Exception: notes=''\n slides.append({'names':names,'texts':texts,'notes':notes,'rotations':rotations})\nwith zipfile.ZipFile(p) as z:\n xml=''.join(z.read(n).decode('utf-8','replace') for n in z.namelist() if n.startswith('ppt/slides/slide') and n.endswith('.xml'))\n print(json.dumps({'slideCount':len(prs.slides),'width':prs.slide_width,'height':prs.slide_height,'ratio':prs.slide_width/prs.slide_height,'slides':slides,'xmlSignals':{'srcRectCount':xml.count('<a:srcRect'),'rotationCount':xml.count(' rot="'),'connectorNameCount':xml.count('flow-connector'),'transitionCount':xml.count('<p:transition'),'gradientCount':xml.count('<a:gradFill'),'chevronCount':xml.count('prst="chevron"'),'presetNames':sorted(set(re.findall(r'<a:prstGeom prst="([^"]+)"',xml))),'chartPartCount':len([n for n in z.namelist() if re.match(r'ppt/charts/chart\\d+\\.xml$',n)]),'embeddingCount':len([n for n in z.namelist() if n.startswith('ppt/embeddings/') and n.endswith('.xlsx')])}}))`;
   const result = command("python3", ["-c", script, path]);
   return { result, data: result.status === 0 ? parseJson(result.stdout, `python-pptx ${path}`) : undefined };
 }
@@ -113,6 +114,9 @@ async function renderWithLibreOffice(artifact, expectedPages) {
 }
 
 async function validateArtifact(artifact, harnessPath, pptcliPath) {
+  const typescript = await validatePptxPackage(artifact.output);
+  check(typescript.valid && typescript.errorCount === 0, `${artifact.name}: TypeScript OOXML validator reported errors`);
+
   const officeValidateCommand = command("officecli", ["validate", artifact.output, "--json"]);
   const officeValidate = parseJson(officeValidateCommand.stdout, `${artifact.name} OfficeCLI validate`);
   check(officeValidateCommand.status === 0 && officeValidate?.success === true, `${artifact.name}: OfficeCLI OpenXmlValidator reported errors`);
@@ -147,11 +151,23 @@ async function validateArtifact(artifact, harnessPath, pptcliPath) {
   const texts = python.data?.slides?.flatMap((slide) => slide.texts) ?? [];
   for (const name of artifact.expectedNames ?? []) check(names.includes(name), `${artifact.name}: expected native object name ${name} is missing`);
   for (const text of artifact.expectedText ?? []) check(texts.some((value) => value.includes(text)), `${artifact.name}: expected text ${text} is missing after parsing`);
+  for (const text of artifact.expectedNotes ?? []) check((python.data?.slides ?? []).some((slide) => (slide.notes ?? "").includes(text)), `${artifact.name}: expected speaker notes ${text} are missing`);
   if (artifact.expectCrop) {
     check((python.data?.xmlSignals?.srcRectCount ?? 0) >= 1, `${artifact.name}: image crop XML is missing`);
     check((python.data?.xmlSignals?.rotationCount ?? 0) >= 1, `${artifact.name}: image rotation XML is missing`);
     check((python.data?.xmlSignals?.connectorNameCount ?? 0) >= 3, `${artifact.name}: connector object names are missing`);
   }
+  if (artifact.expectedTransitionCount !== undefined) check((python.data?.xmlSignals?.transitionCount ?? 0) === artifact.expectedTransitionCount, `${artifact.name}: expected ${artifact.expectedTransitionCount} native transitions, found ${python.data?.xmlSignals?.transitionCount ?? 0}`);
+  if (artifact.expectNativeFeatures) {
+    check((python.data?.xmlSignals?.gradientCount ?? 0) >= 1, `${artifact.name}: native gradient XML is missing`);
+    check((python.data?.xmlSignals?.chevronCount ?? 0) >= 1, `${artifact.name}: native chevron preset is missing`);
+  }
+  if (artifact.expectedPresetNames) {
+    const presets = new Set(python.data?.xmlSignals?.presetNames ?? []);
+    const missingPresets = artifact.expectedPresetNames.filter((preset) => !presets.has(preset));
+    check(missingPresets.length === 0, `${artifact.name}: native preset gallery is missing ${missingPresets.join(", ")}`);
+  }
+  if (artifact.expectChart) check((python.data?.xmlSignals?.chartPartCount ?? 0) >= 1 && (python.data?.xmlSignals?.embeddingCount ?? 0) >= 1, `${artifact.name}: native chart or workbook embedding is missing`);
 
   const libreOffice = await renderWithLibreOffice(artifact, artifact.expectedPages);
   let cleanPlate;
@@ -169,6 +185,7 @@ async function validateArtifact(artifact, harnessPath, pptcliPath) {
     bytes: (await stat(artifact.output)).size,
     expectedPages: artifact.expectedPages,
     exportReport: artifact.reportPath ? JSON.parse(await readFile(artifact.reportPath, "utf8")) : undefined,
+    typescript,
     officeCli: { validate: officeValidate, issues: officeIssues, outline: officeOutlineCommand.stdout, screenshot: officeScreenshot, screenshotStats: officeScreenshotStats },
     pptRs: { cli: pptcli, direct },
     pythonPptx: python.data,
@@ -252,12 +269,42 @@ async function main() {
   const qualityPath = join(sourcesRoot, "passing-quality.json");
   await writeFile(qualityPath, JSON.stringify({ schemaVersion: 1, id: "external-compat-quality", canvas: { width: 1000, height: 563 }, mode: "canonical", strict: true, issues: [], passed: true, summary: { total: 0, info: 0, warning: 0, error: 0, critical: 0, hard: 0 } }));
   const mediaOutput = join(outputRoot, "editable-media-connectors.pptx");
-  await exportEditablePptx({ schemaVersion: 1, title: "Media and connectors", slides: [{ id: "media-slide", width: 1000, height: 562.5, objects: [
+  await exportEditablePptx({ schemaVersion: 1, title: "Media and connectors", slides: [{ id: "media-slide", width: 1000, height: 562.5, nativeTransition: { kind: "split", splitOrientation: "vertical", durationMs: 700 }, objects: [
     { id: "media-title", sourceId: "media-title", sourceKind: "dom", type: "text", x: 70, y: 45, width: 500, height: 70, zIndex: 1, native: true, text: "Cropped media & connectors", fontFace: "Arial", fontSize: 28, color: "#172033", bold: true },
     { id: "hero-media", sourceId: "hero-media", sourceKind: "dom", type: "image", x: 90, y: 160, width: 360, height: 250, zIndex: 2, native: true, path: mediaPath, fit: "cover", crop: { x: 0.1, y: 0.05, width: 0.75, height: 0.9 }, focal: { x: 0.72, y: 0.5 }, rotation: 7, alt: "Red and blue crop", layoutSlot: "hero", sourceDimensions: { width: 400, height: 200 } },
-    { id: "target-box", sourceId: "target-box", sourceKind: "diagram", type: "shape", x: 670, y: 210, width: 190, height: 105, zIndex: 3, native: true, shape: "rounded-rectangle", fill: "#dbeafe", stroke: "#1d4ed8" },
+    { id: "target-box", sourceId: "target-box", sourceKind: "diagram", type: "shape", x: 670, y: 210, width: 190, height: 105, zIndex: 3, native: true, shape: "chevron", gradient: { angle: 45, stops: [{ color: "#dbeafe", position: 0 }, { color: "#60a5fa", position: 1 }] }, stroke: "#1d4ed8", rotation: 4 },
     { id: "flow-connector", sourceId: "flow-connector", sourceKind: "diagram", type: "connector", x: 450, y: 230, width: 220, height: 100, zIndex: 4, native: true, points: [{ x: 450, y: 285 }, { x: 560, y: 285 }, { x: 560, y: 262 }, { x: 670, y: 262 }], stroke: "#1d4ed8", endArrow: true, label: "flow" },
   ] }] }, mediaOutput, { qualityReport: qualityPath });
+
+  const transitionKinds = ["cut", "fade", "push", "wipe", "split", "reveal", "cover", "zoom"];
+  const transitionShapes = ["rect", "chevron", "star5", "flowChartDecision", "foldedCorner", "cloudCallout", "actionButtonHome", "donut"];
+  const transitionOutput = join(outputRoot, "editable-native-transitions.pptx");
+  await exportEditablePptx({ schemaVersion: 1, title: "Native transitions", slides: transitionKinds.map((kind, index) => ({ id: `transition-${kind}`, width: 1000, height: 562.5, nativeTransition: { kind, durationMs: 500 + index * 25, ...(["push", "wipe", "reveal", "cover"].includes(kind) ? { direction: "right" } : {}), ...(kind === "split" ? { splitOrientation: "horizontal", splitDirection: "out" } : {}), ...(kind === "zoom" ? { zoomDirection: "out" } : {}) }, objects: [{ id: `transition-shape-${kind}`, sourceId: `transition-shape-${kind}`, sourceKind: "dom", type: "shape", shape: transitionShapes[index], x: 250, y: 150, width: 500, height: 250, zIndex: 1, native: true, fill: "#dbeafe", stroke: "#1d4ed8", text: kind, textColor: "#172033", fontSize: 28, bold: true }] })) }, transitionOutput, { qualityReport: qualityPath });
+  const transitionXmlCommand = command("python3", ["-c", 'import json,sys,zipfile\nwith zipfile.ZipFile(sys.argv[1]) as z: print(json.dumps([z.read(f"ppt/slides/slide{i}.xml").decode("utf-8") for i in range(1,9)]))', transitionOutput]);
+  const transitionXml = parseJson(transitionXmlCommand.stdout, "native transition XML");
+  transitionKinds.forEach((_, index) => check(transitionXmlCommand.status === 0 && transitionXml?.[index]?.includes("p14:dur=") && !transitionXml?.[index]?.includes("advTm="), `transition slide ${index + 1} has invalid duration or automatic-advance XML`));
+  check(transitionXml?.[7]?.includes('<p:zoom dir="out"/>'), "native zoom-out transition was not preserved");
+
+  const shapeOutput = join(outputRoot, "editable-native-shapes.pptx");
+  const shapesPerSlide = 12;
+  const shapeSlides = Array.from({ length: Math.ceil(NATIVE_SHAPE_PRESETS.length / shapesPerSlide) }, (_, slideIndex) => {
+    const presets = NATIVE_SHAPE_PRESETS.slice(slideIndex * shapesPerSlide, (slideIndex + 1) * shapesPerSlide);
+    const objects = presets.flatMap((preset, index) => {
+      const column = index % 4; const row = Math.floor(index / 4); const x = 35 + column * 240; const y = 28 + row * 175;
+      return [
+        { id: `native-preset-${preset}`, sourceId: `native-preset-${preset}`, sourceKind: "dom", type: "shape", shape: preset, x, y, width: 170, height: 115, zIndex: index * 2, native: true, fill: "#dbeafe", stroke: "#1d4ed8" },
+        { id: `native-label-${preset}`, sourceId: `native-label-${preset}`, sourceKind: "dom", type: "text", x, y: y + 118, width: 200, height: 35, zIndex: index * 2 + 1, native: true, text: preset, fontFace: "Arial", fontSize: 9, color: "#172033", align: "center" },
+      ];
+    });
+    return { id: `native-shapes-${slideIndex + 1}`, width: 1000, height: 562.5, objects };
+  });
+  await exportEditablePptx({ schemaVersion: 1, title: "Native shape presets", slides: shapeSlides }, shapeOutput, { qualityReport: qualityPath });
+
+  const dataOutput = join(outputRoot, "editable-native-data.pptx");
+  await exportEditablePptx({ schemaVersion: 1, title: "Native data", slides: [{ id: "native-data", width: 1000, height: 562.5, notes: "Speaker notes line 1\nLine 2", objects: [
+    { id: "native-table", sourceId: "native-table", sourceKind: "dom", type: "table", x: 40, y: 80, width: 420, height: 360, zIndex: 1, native: true, rows: [[{ text: "Metric", fill: "#1d4ed8", color: "#ffffff", bold: true }, { text: "Value", fill: "#1d4ed8", color: "#ffffff", bold: true }], [{ text: "Revenue" }, { text: "42" }], [{ text: "Margin" }, { text: "18%" }]], columnWidths: [2, 1], borderColor: "#94a3b8" },
+    { id: "native-chart", sourceId: "native-chart", sourceKind: "dom", type: "chart", x: 500, y: 80, width: 450, height: 360, zIndex: 2, native: true, chartType: "barStacked", title: "Quarterly", showLegend: true, series: [{ name: "Actual", labels: ["Q1", "Q2"], values: [10, 12], color: "#1d4ed8" }, { name: "Plan", labels: ["Q1", "Q2"], values: [8, 11], color: "#f05a36" }] },
+  ] }] }, dataOutput, { qualityReport: qualityPath });
 
   const matrix = [
     { name: "raster-1280", kind: "raster", output: raster1280.output, reportPath: `${raster1280.output}.report.json`, expectedPages: 1 },
@@ -266,7 +313,10 @@ async function main() {
     { name: "editable-css-decoration", kind: "editable", output: css.output, reportPath: css.exportReport, expectedPages: 1, expectedNames: ["css-title", "css-box"], cleanPlatePath: cssCleanPlate, cleanPlateSample: { x: .24, y: .25, color: [147, 51, 234] } },
     { name: "editable-no-ids", kind: "editable", output: noIds.output, reportPath: noIds.exportReport, expectedPages: 1, expectedNames: ["no-id-slide-clean-plate"], cleanPlatePath: noIdsCleanPlate },
     { name: "editable-multi-slide", kind: "editable", output: multi.output, reportPath: multi.exportReport, expectedPages: 2, expectedNames: ["multi-1-title", "multi-2-title"], expectedText: ["Multi slide one", "Multi slide two"], cleanPlatePath: multiCleanPlates[0] },
-    { name: "editable-media-connectors", kind: "editable", output: mediaOutput, reportPath: `${mediaOutput}.report.json`, expectedPages: 1, expectedNames: ["media-title", "hero-media", "target-box", "flow-connector-1", "flow-connector-2", "flow-connector-3", "flow-connector-label"], expectedText: ["Cropped media & connectors", "flow"], expectCrop: true },
+    { name: "editable-media-connectors", kind: "editable", output: mediaOutput, reportPath: `${mediaOutput}.report.json`, expectedPages: 1, expectedNames: ["media-title", "hero-media", "target-box", "flow-connector-1", "flow-connector-2", "flow-connector-3", "flow-connector-label"], expectedText: ["Cropped media & connectors", "flow"], expectCrop: true, expectNativeFeatures: true, expectedTransitionCount: 1 },
+    { name: "editable-native-transitions", kind: "editable", output: transitionOutput, reportPath: `${transitionOutput}.report.json`, expectedPages: 8, expectedNames: transitionKinds.map((kind) => `transition-shape-${kind}`), expectedText: transitionKinds, expectedTransitionCount: 8 },
+    { name: "editable-native-shapes", kind: "editable", output: shapeOutput, reportPath: `${shapeOutput}.report.json`, expectedPages: shapeSlides.length, expectedNames: NATIVE_SHAPE_PRESETS.map((preset) => `native-preset-${preset}`), expectedText: [NATIVE_SHAPE_PRESETS[0], NATIVE_SHAPE_PRESETS.at(-1)], expectedPresetNames: NATIVE_SHAPE_PRESETS },
+    { name: "editable-native-data", kind: "editable", output: dataOutput, reportPath: `${dataOutput}.report.json`, expectedPages: 1, expectedNames: ["native-table", "native-chart"], expectedNotes: ["Speaker notes line 1"], expectChart: true },
   ];
 
   for (const artifact of matrix) artifacts.push(await validateArtifact(artifact, harnessPath, pptcliPath));

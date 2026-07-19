@@ -74,7 +74,7 @@ export function normalizeDeck(source: string): NormalizedDeck {
     slide.setAttribute("data-slide-id", slide.getAttribute("data-slide-id") || `slide-${String(index + 1).padStart(2, "0")}`);
     slide.classList.toggle("active", index === 0);
     slide.classList.toggle("visible", index === 0);
-    slide.querySelectorAll<HTMLElement>("h1,h2,h3,p,li,img,video,svg,figure,table,blockquote").forEach((object, objectIndex) => { object.dataset.objectId ||= `${slide.getAttribute("data-slide-id")}-object-${String(objectIndex + 1).padStart(2, "0")}`; });
+    slide.querySelectorAll<HTMLElement>("h1,h2,h3,p,li,a,pre,img,video,svg,figure,table,blockquote").forEach((object, objectIndex) => { object.dataset.objectId ||= `${slide.getAttribute("data-slide-id")}-object-${String(objectIndex + 1).padStart(2, "0")}`; });
   });
   return { html: `<!doctype html>\n${doc.documentElement.outerHTML}`, strategy, confidence, slideCount: slides.length, warnings };
 }

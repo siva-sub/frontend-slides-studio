@@ -60,6 +60,7 @@ For an import, inspect the file first. Do not ask the user to restate facts visi
 - Reference animation or object motion → read `workflows/motion.md`, then use the Studio motion and transition controls.
 - Explicit art-directed image slide → read `workflows/visual-master.md`.
 - Validation, build, quality, PDF, or PPTX → read `workflows/export.md`.
+- Native PowerPoint shapes, slide transitions, OOXML, shape discovery, or XML compatibility → read `references/pptx-native.md`, then `workflows/export.md`.
 - Contracts, stable IDs, provenance, or review states → read `references/contracts.md`.
 - Command uncertainty → read `references/commands.md`.
 - UI-control uncertainty → read `references/studio-controls.md`.
@@ -79,6 +80,7 @@ When Studio is requested or selected by default, do not stop after writing `deck
 - Never copy Dashi PPT code, themes, layouts, or exporter output into this repository. Behavioral comparison may inform an independently implemented workflow only.
 - Never discover API keys by walking a user's project for `.env` files.
 - Never describe raster PPTX as editable.
+- Never pass an unvalidated shape preset or raw transition fragment into OOXML; use `@slides-studio/pptx-compat`.
 - Never call regeneration a rollback; exact restore copies a historical artifact, while regeneration creates a branch.
 - Never animate directly from aggregate MotionAnalysis without an explicit object-ID mapping.
 - Never turn continuous prose into guessed slides without user confirmation.
