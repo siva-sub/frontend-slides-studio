@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildAudienceDocument, createPresentationSession, loadPresentationBootstrap, presentationRoute, presentationSlideIds, withPresentationBase } from "./presentation";
+import { buildAudienceDocument, createPresentationSession, loadPresentationBootstrap, placePresentationWindows, presentationRoute, presentationSlideIds, requestPresentationScreenPlan, withPresentationBase } from "./presentation";
 
 const REVISION = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 const deck = '<!doctype html><html><head></head><body><main class="deck-stage"><section class="slide" data-slide-id="s1"><h1>One</h1><script type="text/plain" data-speaker-notes>Secret</script></section><section class="slide" data-slide-id="s2" data-slide-skipped="true">Two</section><section class="slide" data-slide-id="s3">Three</section></main></body></html>';
@@ -27,6 +27,19 @@ describe("presentation client", () => {
     expect(new DOMParser().parseFromString(audience, "text/html").querySelector("base")?.getAttribute("href")).toBe("/api/presentation-assets/p1/cap/");
     expect(audience).toContain("slides-studio:presentation-state");
     expect(presentationSlideIds(deck)).toEqual(["s1", "s3"]);
+  });
+
+  it("plans and places windows on an extended display when permission is available", async () => {
+    const primary = { availLeft: 0, availTop: 0, availWidth: 1440, availHeight: 900, isPrimary: true };
+    const external = { availLeft: 1440, availTop: 0, availWidth: 1920, availHeight: 1080, isPrimary: false };
+    const plan = await requestPresentationScreenPlan({ getScreenDetails: async () => ({ screens: [primary, external], currentScreen: primary }) } as never);
+    expect(plan?.audience).toBe(external);
+    const presenter = { moveTo: vi.fn(), resizeTo: vi.fn(), focus: vi.fn() };
+    const audience = { moveTo: vi.fn(), resizeTo: vi.fn(), focus: vi.fn() };
+    expect(placePresentationWindows(plan, presenter as never, audience as never)).toBe(true);
+    expect(audience.moveTo).toHaveBeenCalledWith(1440, 0);
+    expect(audience.resizeTo).toHaveBeenCalledWith(1920, 1080);
+    expect(await requestPresentationScreenPlan({} as never)).toBeNull();
   });
 
   it("parses only complete role routes and replaces prior presentation bases", () => {

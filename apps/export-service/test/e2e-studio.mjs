@@ -49,6 +49,17 @@ try {
   assert(await page.locator("#pptx-slide-intent option").count() === 4, "Studio does not expose per-slide PPTX intent");
   assert((await page.locator(".pptx-readiness-panel .quality-status").textContent())?.includes("NATIVE-ORIENTED"), "Studio did not compute PPTX HTML readiness");
   assert((await page.locator(".pptx-readiness-panel").textContent())?.includes("2 native candidates") || (await page.locator(".pptx-readiness-panel").textContent())?.includes("native candidates"), "Studio readiness panel omitted native/fallback counts");
+  assert(await page.getByRole("button", { name: "Present with speaker view" }).isDisabled(), "Unauthenticated Studio should not offer dual-window presentation");
+  const notesEditor = page.locator("#speaker-notes");
+  await notesEditor.fill("Private cue from Studio"); await notesEditor.press("Tab");
+  const notesFrame = studioFrame(); assert(notesFrame, "Studio preview disappeared while editing speaker notes");
+  await notesFrame.waitForFunction(() => document.querySelector('script[data-speaker-notes]')?.textContent?.includes("Private cue from Studio"));
+  await page.getByRole("button", { name: "Presentation only", exact: true }).click();
+  const presentationFrame = page.frameLocator('iframe[title="Presentation only"]');
+  await presentationFrame.locator("h1").waitFor();
+  assert(await presentationFrame.locator("[data-speaker-notes]").count() === 0, "Presentation-only fallback leaked speaker notes");
+  await page.getByRole("button", { name: "Exit presentation" }).click();
+  await page.getByText("Editable PPTX readiness", { exact: true }).waitFor();
   await page.locator("#export-format").selectOption("editable-pptx");
   assert(await page.locator("#export-quality-gate").inputValue() === "strict" && await page.locator("#export-quality-gate").isDisabled(), "Editable PPTX did not lock strict quality");
   await page.locator("#export-format").selectOption("pdf");

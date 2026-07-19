@@ -20,6 +20,21 @@ export interface PresentationBootstrap {
   audienceUrl?: string;
 }
 
+interface PresentationScreen {
+  availLeft: number;
+  availTop: number;
+  availWidth: number;
+  availHeight: number;
+  isPrimary?: boolean;
+}
+
+export interface PresentationScreenPlan {
+  presenter: PresentationScreen;
+  audience: PresentationScreen;
+}
+
+type MultiScreenWindow = Window & typeof globalThis & { getScreenDetails?: () => Promise<{ screens: PresentationScreen[]; currentScreen: PresentationScreen }> };
+
 const endpoint = "/api/presentation-sessions";
 
 async function responseJson<T>(response: Response): Promise<T> {
@@ -52,6 +67,28 @@ export async function loadPresentationBootstrap(sessionId: string, capability: s
   if (result.sessionId !== sessionId || !result.deckId || !validRevision(result.revision) || !["audience", "presenter"].includes(result.role) || typeof result.html !== "string" || !result.assetBaseUrl) throw new Error("Presentation launch bridge returned an incomplete bootstrap.");
   if (result.role === "audience" && /data-speaker-notes/i.test(result.html)) throw new Error("Audience bootstrap contains private speaker-note metadata.");
   return result;
+}
+
+export async function requestPresentationScreenPlan(host: MultiScreenWindow = window as MultiScreenWindow): Promise<PresentationScreenPlan | null> {
+  if (!host.getScreenDetails) return null;
+  try {
+    const details = await host.getScreenDetails();
+    const audience = details.screens.find((screen) => screen !== details.currentScreen && !screen.isPrimary)
+      ?? details.screens.find((screen) => screen !== details.currentScreen);
+    return audience ? { presenter: details.currentScreen, audience } : null;
+  } catch { return null; }
+}
+
+export function placePresentationWindows(plan: PresentationScreenPlan | null, presenter: Window | null, audience: Window | null): boolean {
+  if (!plan || !presenter || !audience) return false;
+  try {
+    presenter.moveTo(plan.presenter.availLeft, plan.presenter.availTop);
+    presenter.resizeTo(plan.presenter.availWidth, plan.presenter.availHeight);
+    audience.moveTo(plan.audience.availLeft, plan.audience.availTop);
+    audience.resizeTo(plan.audience.availWidth, plan.audience.availHeight);
+    audience.focus(); presenter.focus();
+    return true;
+  } catch { return false; }
 }
 
 export function presentationRoute(search = window.location.search): { role: PresentationViewRole; sessionId: string; capability: string } | null {

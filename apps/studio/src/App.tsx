@@ -9,6 +9,9 @@ import { deleteSlide, duplicateSlide, reorderSlide, toggleSlideSkipped } from ".
 import { insertDiagram } from "./lib/diagram";
 import { submitExportJob, waitForExportJob, type ExportFormat, type ExportJob, type ExportQualityGate } from "./lib/export";
 import { launchToken, loadLaunchSession, saveLaunchSession, type StudioLaunchSession } from "./lib/launch";
+import { createPresentationSession, placePresentationWindows, requestPresentationScreenPlan, type PresentationSessionLaunch } from "./lib/presentation";
+import { applySpeakerNotes, readSpeakerNotes } from "./lib/speakerNotes";
+import { PresentationOnlyView } from "./PresentationViews";
 import {
   applyMediaReframe,
   applyMediaSource,
@@ -99,6 +102,12 @@ export function App() {
   const [exportBusy, setExportBusy] = useState(false);
   const [exportJob, setExportJob] = useState<ExportJob | null>(null);
   const [exportStatus, setExportStatus] = useState("Choose an output intent. PDF is static with selectable text; editable presentation output is PPTX.");
+  const [presentationOnly, setPresentationOnly] = useState(false);
+  const [presentationBusy, setPresentationBusy] = useState(false);
+  const [presentationLaunch, setPresentationLaunch] = useState<PresentationSessionLaunch | null>(null);
+  const [presentationStatus, setPresentationStatus] = useState("Use Win+P → Extend on Windows, then open presenter and audience views. Duplicate mode cannot keep notes private.");
+  const presenterWindow = useRef<Window | null>(null);
+  const audienceWindow = useRef<Window | null>(null);
 
   const load = async (fileName: string, source: string) => {
     for (const url of previewAssetUrls.current.values()) URL.revokeObjectURL(url);
@@ -296,6 +305,42 @@ export function App() {
     : exportFormat === "pptx"
       ? "Raster PPTX places one full-slide image on each page. ISO/IEC 29500 Transitional package compatibility is validated, but slide objects are not editable."
       : "Editable PPTX maps supported stable-ID text, shapes, and images to native objects, records raster fallbacks, requires strict quality, and remains pending manual review after render-back.";
+  const startPresenterSession = async () => {
+    if (!launchSession) { setPresentationStatus("Dual-window presenting requires an authenticated pnpm studio:open session. Presentation only remains available."); return; }
+    if (store.dirty) { setPresentationStatus("Save the deck before presenting so both windows use the same revision."); return; }
+    const presenter = window.open("about:blank", "slides-studio-presenter", "popup,width=1180,height=760");
+    const audience = window.open("about:blank", "slides-studio-audience", "popup,width=1280,height=720");
+    if (!presenter) { audience?.close(); setPresentationStatus("Presenter popup was blocked. Allow popups or use Presentation only."); return; }
+    presenter.document.title = "Opening presenter view…";
+    if (audience) audience.document.title = "Opening audience view…";
+    presenterWindow.current = presenter; audienceWindow.current = audience;
+    const screenPlan = requestPresentationScreenPlan();
+    setPresentationBusy(true);
+    try {
+      const launch = await createPresentationSession(launchSession);
+      setPresentationLaunch(launch);
+      presenter.location.replace(new URL(launch.presenterUrl, window.location.origin).href);
+      if (audience) audience.location.replace(new URL(launch.audienceUrl, window.location.origin).href);
+      const positioned = placePresentationWindows(await screenPlan, presenter, audience);
+      setPresentationStatus(audience
+        ? positioned ? "Presenter and audience windows opened on separate displays. Enter fullscreen from the audience window." : "Presenter and audience windows opened. On Windows choose Win+P → Extend, move the audience window to the projector, then press F there."
+        : "Presenter view opened, but the audience popup was blocked. Use Reopen audience from presenter or Studio.");
+    } catch (error) {
+      presenter.close(); audience?.close();
+      setPresentationStatus(error instanceof Error ? error.message : String(error));
+    } finally { setPresentationBusy(false); }
+  };
+  const reopenAudience = () => {
+    if (!presentationLaunch) return;
+    const opened = window.open(presentationLaunch.audienceUrl, `slides-studio-audience-${presentationLaunch.sessionId}`, "popup,width=1280,height=720");
+    audienceWindow.current = opened;
+    setPresentationStatus(opened ? "Audience window reopened. Press F inside it for fullscreen." : "Audience popup was blocked. Allow popups or use Presentation only.");
+  };
+  const commitSpeakerNotes = (notes: string) => {
+    const current = readSpeakerNotes(store.sourceHtml, store.currentSlide);
+    if (notes === current) return;
+    void commitDeckOperation(applySpeakerNotes(store.sourceHtml, store.currentSlide, notes), notes ? "Edit speaker notes" : "Clear speaker notes");
+  };
   const runExport = async () => {
     if (store.dirty) { setExportStatus("Save the current deck before exporting so the service reads the same revision."); return; }
     if (exportFormat === "editable-pptx" && !pptxReadiness.ready) { setExportStatus("Resolve blocking Editable PPTX readiness issues before export."); return; }
@@ -348,7 +393,12 @@ export function App() {
   const pptxReadiness = useMemo(() => analyzePptxHtmlReadiness(new DOMParser().parseFromString(store.sourceHtml, "text/html")), [store.sourceHtml]);
   const currentPptxIntent = useMemo(() => readSlidePptxIntent(store.sourceHtml, store.currentSlide), [store.sourceHtml, store.currentSlide]);
   const editableExportBlocked = exportFormat === "editable-pptx" && !pptxReadiness.ready;
+  const currentSpeakerNotes = useMemo(() => readSpeakerNotes(store.sourceHtml, store.currentSlide), [store.sourceHtml, store.currentSlide]);
+  const currentSlideId = useMemo(() => new DOMParser().parseFromString(store.sourceHtml, "text/html").querySelectorAll<HTMLElement>(".slide")[store.currentSlide]?.dataset.slideId ?? `slide-${store.currentSlide + 1}`, [store.sourceHtml, store.currentSlide]);
   const slideSummaries = useMemo(() => buildSlideThumbnails(resolvePreviewMediaSources(stylePreview ? styledFrameSource : store.sourceHtml, previewAssetUrls.current)).filter((slide) => !store.search.trim() || slide.label.toLowerCase().includes(store.search.trim().toLowerCase())), [store.sourceHtml, store.search, stylePreview, styledFrameSource, previewAssetRevision]);
+  const presentationSource = useMemo(() => resolvePreviewMediaSources(store.sourceHtml, previewAssetUrls.current), [store.sourceHtml, previewAssetRevision]);
+
+  if (presentationOnly) return <PresentationOnlyView html={presentationSource} onExit={() => setPresentationOnly(false)} />;
 
   return <main className="studio-shell">
     <header className="topbar">
@@ -362,6 +412,7 @@ export function App() {
         <button className="quiet-button" onClick={() => { void openNativeFile(); }}>Open HTML</button>
         <button className="quiet-button" onClick={() => { void attachFolderWorkspace(); }}>Attach folder</button>
         <button className="quiet-button" onClick={() => download(store.fileName, store.sourceHtml)}>Download copy</button>
+        <button className="quiet-button" onClick={() => { if (launchSession) void startPresenterSession(); else setPresentationOnly(true); }}>{launchSession ? "Present" : "Present only"}</button>
         <button className="save-button" onClick={() => { void saveCurrent(); }}>Save <span>⌘S</span></button>
         <input ref={fileInput} hidden type="file" accept=".html,.htm,text/html" onChange={(event) => { const file = event.target.files?.[0]; if (file) { fileHandle.current = null; setLaunchSession(null); setExportSourcePath(""); void file.text().then((text) => load(file.name, text)); } }} />
         <input ref={mediaInput} hidden type="file" accept="image/*,video/*" onChange={(event) => { const file = event.target.files?.[0]; if (file) void replaceSelectedMedia(file); event.currentTarget.value = ""; }} />
@@ -458,6 +509,20 @@ export function App() {
         </div>
         <div className="inspector-section"><button className="danger-button" onClick={() => frame.current?.contentWindow?.postMessage({ type: "studio:delete-selected", protocolVersion: 1 }, "*")}>Delete object</button></div>
       </> : <div className="empty-state"><span>◎</span><h3>Select something</h3><p>Choose Edit for copy or Move for geometry. Browse leaves the original deck untouched.</p></div>}
+      <div className="inspector-section speaker-notes-panel">
+        <label htmlFor="speaker-notes">Speaker notes · {currentSlideId}</label>
+        <textarea id="speaker-notes" key={`${currentSlideId}:${currentSpeakerNotes}`} rows={7} defaultValue={currentSpeakerNotes} placeholder="Private presenter cues for this slide" onBlur={(event) => commitSpeakerNotes(event.target.value)} />
+        <div className="control-grid"><button onMouseDown={(event) => event.preventDefault()} onClick={() => { const field = document.querySelector<HTMLTextAreaElement>("#speaker-notes"); if (field) { field.value = ""; commitSpeakerNotes(""); } }}>Clear notes</button><button onMouseDown={(event) => event.preventDefault()} onClick={() => { const field = document.querySelector<HTMLTextAreaElement>("#speaker-notes"); if (field) commitSpeakerNotes(field.value); }}>Save notes</button></div>
+        <p>Notes stay out of audience HTML, appear in Presenter view, and export to editable PPTX speaker notes.</p>
+      </div>
+      <div className="inspector-section presentation-panel">
+        <label>Present</label>
+        <button className="control-button presentation-launch" disabled={presentationBusy || !launchSession || store.dirty} onClick={() => { void startPresenterSession(); }}>{presentationBusy ? "Opening views…" : "Present with speaker view"}</button>
+        <button className="control-button" onClick={() => setPresentationOnly(true)}>Presentation only</button>
+        <button className="control-button" disabled={!presentationLaunch} onClick={reopenAudience}>Reopen audience</button>
+        <p className="presentation-status" aria-live="polite">{presentationStatus}</p>
+        <p><b>Windows:</b> press Win+P and choose Extend. Duplicate mirrors one desktop, so it cannot separate private notes from audience slides. Fullscreen requires a click or F inside the audience window.</p>
+      </div>
       <div className="inspector-section transition-controls">
         <label htmlFor="page-transition-kind">Page transition</label>
         <select id="page-transition-kind" value={currentTransition.kind} onChange={(event) => commitPageTransition({ kind: event.target.value as TransitionSpecV1["kind"] })}>{["none", "crossfade", "slide", "zoom", "circle-reveal", "clip-wipe", "pixel-grid", "pixel-bars", "slice-vertical", "slice-horizontal"].map((kind) => <option key={kind} value={kind}>{kind}</option>)}</select>

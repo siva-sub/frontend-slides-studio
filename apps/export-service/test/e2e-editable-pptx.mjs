@@ -7,7 +7,7 @@ import { approveEditablePptx, exportEditablePptx } from "@slides-studio/export";
 const root = join(tmpdir(), "frontend-slides-studio-editable-smoke"); await rm(root, { recursive: true, force: true }); await mkdir(root, { recursive: true });
 const plate = join(root, "plate.png"); const output = join(root, "editable.pptx"); const qualityReport = join(root, "quality-report.json");
 const image = spawnSync("python3", ["-c", "from PIL import Image\nimport sys\nImage.new('RGB',(1920,1080),(246,244,237)).save(sys.argv[1])", plate], { encoding: "utf8" }); if (image.status !== 0) throw new Error(image.stderr);
-const graph = { schemaVersion: 1, title: "Editable object graph smoke", slides: [{ id: "slide-01", width: 1920, height: 1080, nativeTransition: { kind: "wipe", direction: "left", durationMs: 650 }, objects: [
+const graph = { schemaVersion: 1, title: "Editable object graph smoke", slides: [{ id: "slide-01", width: 1920, height: 1080, notes: "Presenter cue exported from Studio\nPause for questions.", nativeTransition: { kind: "wipe", direction: "left", durationMs: 650 }, objects: [
   { id: "clean-plate", sourceId: "clean_plate", sourceKind: "visual-scene", type: "image", x: 0, y: 0, width: 1920, height: 1080, zIndex: 0, native: false, fallbackReason: "visual-master clean plate", path: plate, fit: "stretch" },
   { id: "accent-card", sourceId: "card", sourceKind: "diagram", type: "shape", x: 120, y: 180, width: 520, height: 420, zIndex: 10, native: true, shape: "chevron", gradient: { angle: 45, stops: [{ color: "#FDE8E1", position: 0 }, { color: "#F05A36", position: 1 }] }, stroke: "#F05A36", rotation: 2 },
   { id: "cropped-media", sourceId: "hero", sourceKind: "dom", type: "image", x: 1280, y: 120, width: 480, height: 360, zIndex: 12, native: true, path: plate, fit: "cover", crop: { x: 0.2, y: 0.1, width: 0.6, height: 0.8 }, focal: { x: 0.7, y: 0.4 }, rotation: 3, alt: "Cropped media evidence", layoutSlot: "hero" },
@@ -30,4 +30,7 @@ const inventoryCode = "from pptx import Presentation\nimport sys\nprs=Presentati
 const inventory = spawnSync("python3", ["-c", inventoryCode, output], { encoding: "utf8" }); if (inventory.status !== 0) throw new Error(inventory.stderr);
 const objectNames = inventory.stdout.trim().split("|");
 for (const name of ["clean-plate", "accent-card", "cropped-media", "title", "flow-1", "flow-label"]) if (!objectNames.includes(name)) throw new Error(`Missing named editable object: ${name}`);
-console.log(JSON.stringify({ ok: true, root, report, objects: objectNames }));
+const notesCode = "from pptx import Presentation\nimport sys\nprint(Presentation(sys.argv[1]).slides[0].notes_slide.notes_text_frame.text)";
+const notes = spawnSync("python3", ["-c", notesCode, output], { encoding: "utf8" });
+if (notes.status !== 0 || !notes.stdout.includes("Presenter cue exported from Studio") || !notes.stdout.includes("Pause for questions")) throw new Error(`Speaker notes are missing from editable PPTX: ${notes.stderr || notes.stdout}`);
+console.log(JSON.stringify({ ok: true, root, report, objects: objectNames, speakerNotes: true }));

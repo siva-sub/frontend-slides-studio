@@ -62,11 +62,26 @@ try {
   await editor.fill("Saved through Studio bridge");
   await editor.press("Tab");
   await frame.waitForFunction(() => document.querySelector("h1")?.textContent === "Saved through Studio bridge");
+  await page.locator("#speaker-notes").fill("Studio-authored note reaches Presenter view and editable PPTX.");
+  await page.getByRole("button", { name: "Save notes" }).click();
+  await frame.waitForFunction(() => document.querySelector('script[data-speaker-notes]')?.textContent?.includes("Studio-authored note"));
   await page.locator(".workspace-meta i").waitFor({ timeout: 10_000 });
   await page.locator(".save-button").click();
   await page.getByText(/Saved launch-deck\.html atomically through the Studio launch bridge/).waitFor({ timeout: 10_000 });
   assert((await readFile(sourcePath, "utf8")).includes("Saved through Studio bridge"), "Studio Save did not update the configured source");
-  console.log(JSON.stringify({ ok: true, url: session.url.replace(token, "<redacted>"), sourcePath }));
+  const context = page.context();
+  await page.getByRole("button", { name: "Present with speaker view" }).click();
+  await page.waitForFunction(() => document.querySelector(".presentation-status")?.textContent?.includes("windows opened"), undefined, { timeout: 10_000 });
+  for (let attempt = 0; attempt < 50 && context.pages().length < 3; attempt++) await page.waitForTimeout(100);
+  const presenterPage = context.pages().find((candidate) => candidate.url().includes("view=presenter"));
+  const audiencePage = context.pages().find((candidate) => candidate.url().includes("view=audience"));
+  assert(presenterPage && audiencePage, "Studio presentation control did not open presenter and audience views");
+  await presenterPage.getByText("PRESENTER VIEW", { exact: true }).waitFor({ timeout: 10_000 });
+  assert((await presenterPage.locator(".presenter-notes").textContent()).includes("Studio-authored note"), "Studio-authored notes did not reach Presenter view");
+  await audiencePage.locator('iframe[title="Audience presentation"]').waitFor({ timeout: 10_000 });
+  assert(await audiencePage.frameLocator('iframe[title="Audience presentation"]').locator("[data-speaker-notes]").count() === 0, "Studio-authored notes leaked into audience view");
+  await presenterPage.close(); await audiencePage.close();
+  console.log(JSON.stringify({ ok: true, url: session.url.replace(token, "<redacted>"), sourcePath, presentationViews: true }));
 } finally {
   await browser?.close();
   const stopped = spawnSync(process.execPath, [stopScript, "--state", session.statePath], { cwd: repositoryRoot, encoding: "utf8", timeout: 10_000 });
