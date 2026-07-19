@@ -124,7 +124,12 @@ async function browserSlide(page: Page, slideIndex: number): Promise<BrowserSlid
     const transitionScript = slide.querySelector<HTMLScriptElement>('script[type="application/json"][data-transition-spec]');
     let transitionSpec: unknown;
     if (transitionScript?.textContent) try { transitionSpec = JSON.parse(transitionScript.textContent); } catch { transitionSpec = undefined; }
-    const notes = slide.querySelector<HTMLScriptElement>('script[type="text/plain"][data-speaker-notes]')?.textContent ?? undefined;
+    const notesElement = slide.querySelector<HTMLScriptElement>('script[type="text/plain"][data-speaker-notes]');
+    let notes = notesElement?.textContent ?? undefined;
+    if (notes !== undefined && notesElement?.dataset.speakerNotesEncoding === "base64") {
+      try { const binary = atob(notes.replace(/\s+/g, "")); notes = new TextDecoder().decode(Uint8Array.from(binary, (character) => character.charCodeAt(0))); }
+      catch { notes = undefined; }
+    }
     return { id: slide.dataset.slideId || `slide-${active + 1}`, width, height, objects, ...(transitionSpec ? { transitionSpec } : {}), ...(notes !== undefined ? { notes } : {}) };
   }, slideIndex);
 }

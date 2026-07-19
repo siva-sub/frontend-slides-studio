@@ -78,6 +78,9 @@ importers:
       '@slides-studio/quality':
         specifier: workspace:*
         version: link:../../packages/quality
+      '@slides-studio/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
       '@slides-studio/style-registry':
         specifier: workspace:*
         version: link:../../packages/style-registry
