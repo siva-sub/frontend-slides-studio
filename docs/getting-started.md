@@ -20,6 +20,7 @@ Some workflows need additional local tools:
 | Optional visual-master tooling | Python 3.10+, packages in `visual/requirements.txt`, and explicit provider credentials for network generation |
 | Editable-PPTX render-back | LibreOffice |
 | Optional PPTX extraction/inspection | python-pptx |
+| External PPTX compatibility gate | OfficeCLI 1.0.138, clean pinned `ppt-rs` and OfficeCLI source checkouts, Rust/Cargo, python-pptx, Pillow, LibreOffice, and Poppler |
 
 Ordinary Studio authoring and share HTML do not require Python, ffmpeg, LibreOffice, or provider credentials. Check the command-line tools visible to the project after installation:
 
@@ -283,6 +284,14 @@ pnpm smoke
 ```
 
 The full smoke suite requires the optional tools listed under Prerequisites.
+
+Run the separately provisioned external PPTX matrix with:
+
+```bash
+pnpm check:pptx-external-compat
+```
+
+This gate generates seven raster/editable artifacts and checks them with OfficeCLI's Microsoft Open XML SDK validator, `ppt-rs` CLI and direct APIs, its repair validator, python-pptx, OfficeCLI rendering, and LibreOffice render-back. Setup, pinned commits, evidence paths, and the documented upstream MCP-suite defect are in [External PPTX Compatibility](pptx-external-compatibility.md).
 
 ## Current Boundaries
 

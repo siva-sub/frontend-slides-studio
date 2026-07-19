@@ -23,6 +23,7 @@
     "check:skill": "tsx scripts/check-skill.ts",
     "check:integrations": "tsx scripts/generate-integrations.ts --check",
     "check:legacy-drift": "tsx scripts/check-legacy-plugin-drift.ts",
+    "check:pptx-external-compat": "pnpm --filter @slides-studio/protocol build && pnpm --filter @slides-studio/quality build && pnpm --filter @slides-studio/media-kit build && pnpm --filter @slides-studio/presentation-objects build && pnpm --filter @slides-studio/export build && pnpm --filter @slides-studio/export-service build && pnpm --filter @slides-studio/export-service exec node test/e2e-external-pptx-compat.mjs",
     "generate:integrations": "tsx scripts/generate-integrations.ts",
     "dev:studio": "pnpm --filter @slides-studio/studio dev",
     "studio:open": "node apps/studio/scripts/start.mjs",

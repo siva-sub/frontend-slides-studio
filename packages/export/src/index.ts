@@ -35,6 +35,31 @@ function relationshipAttributes(tag: string): Record<string, string> {
   return Object.fromEntries([...tag.matchAll(/([A-Za-z][\w:]*)="([^"]*)"/g)].map((match) => [match[1]!, match[2]!]));
 }
 
+async function stripGeneratedNotesPackage(path: string): Promise<void> {
+  const archive = await JSZip.loadAsync(await readFile(path), { checkCRC32: true });
+  const removeNotesRelationships = async (relationshipPath: string): Promise<void> => {
+    const entry = archive.file(relationshipPath);
+    if (!entry) return;
+    const xml = await entry.async("string");
+    archive.file(relationshipPath, xml.replace(/<Relationship\b[^>]*Type="[^"]*\/(?:notesMaster|notesSlide)"[^>]*\/>/g, ""));
+  };
+  const presentation = archive.file("ppt/presentation.xml");
+  if (presentation) archive.file("ppt/presentation.xml", (await presentation.async("string")).replace(/<p:notesMasterIdLst\b[^>]*>[\s\S]*?<\/p:notesMasterIdLst>/g, ""));
+  const contentTypes = archive.file("[Content_Types].xml");
+  if (contentTypes) archive.file("[Content_Types].xml", (await contentTypes.async("string")).replace(/<Override\b[^>]*PartName="\/ppt\/(?:notesMasters|notesSlides)\/[^\"]+"[^>]*\/>/g, ""));
+  await removeNotesRelationships("ppt/_rels/presentation.xml.rels");
+  for (const relationshipPath of Object.keys(archive.files).filter((entry) => /^ppt\/slides\/_rels\/slide\d+\.xml\.rels$/.test(entry))) await removeNotesRelationships(relationshipPath);
+  for (const relationshipPath of Object.keys(archive.files).filter((entry) => entry.endsWith(".rels"))) {
+    const relationshipPart = archive.file(relationshipPath);
+    if (!relationshipPart) continue;
+    const xml = await relationshipPart.async("string");
+    archive.file(relationshipPath, xml.replace(/><Relationship\b/g, ">\n<Relationship").replace(/><\/Relationships>/g, ">\n</Relationships>"));
+  }
+  archive.remove("ppt/notesMasters");
+  archive.remove("ppt/notesSlides");
+  await writeFile(path, await archive.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }));
+}
+
 export async function validatePptxOpenXmlPackage(path: string): Promise<PptxStandardEvidence> {
   const archive = await JSZip.loadAsync(await readFile(path), { checkCRC32: true });
   const parts = new Set(Object.entries(archive.files).filter(([, entry]) => !entry.dir).map(([name]) => name));
@@ -142,8 +167,8 @@ async function imageOptions(object: ImageObject, slideWidth: number, slideHeight
 
 export async function exportRasterPptx(slides: RasterSlideInput[], output: string, options: { qualityReport?: string } = {}): Promise<PptxExportReport> {
   const pptx = new PptxGenJS(); pptx.layout = "LAYOUT_WIDE"; pptx.author = "Frontend Slides Studio"; pptx.subject = "Raster presentation — not natively editable"; pptx.title = "Frontend Slides Studio raster export"; pptx.company = "siva-sub";
-  for (const input of slides) { const slide = pptx.addSlide(); slide.background = { color: "111111" }; slide.addImage({ path: input.imagePath, x: 0, y: 0, w: 13.333, h: 7.5 }); for (const overlay of input.overlays ?? []) slide.addImage({ path: overlay.path, x: overlay.x * 13.333, y: overlay.y * 7.5, w: overlay.width * 13.333, h: overlay.height * 7.5 }); slide.addNotes("Raster export: this slide is a frozen visual snapshot. Supplied real assets may remain separate overlays."); }
-  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output });
+  for (const input of slides) { const slide = pptx.addSlide(); slide.background = { color: "111111" }; slide.addImage({ path: input.imagePath, x: 0, y: 0, w: 13.333, h: 7.5 }); for (const overlay of input.overlays ?? []) slide.addImage({ path: overlay.path, x: overlay.x * 13.333, y: overlay.y * 7.5, w: overlay.width * 13.333, h: overlay.height * 7.5 }); }
+  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await stripGeneratedNotesPackage(output);
   const standard = await validatePptxOpenXmlPackage(output);
   const qualityPath = options.qualityReport ? resolve(options.qualityReport) : undefined;
   const report: PptxExportReport = { status: "generated", mode: "raster", output: resolve(output), slideCount: slides.length, nativeObjects: 0, fallbackObjects: slides.length, fallbackReasons: { "frozen full-slide image": slides.length }, objectInventory: [], limitations: ["Raster PPTX slides are frozen full-slide images and are not natively editable.", STATIC_MOTION_LIMITATION], standard, ...(qualityPath ? { qualityReport: qualityPath } : {}), artifactHashes: { output: await digestFile(output), ...(qualityPath ? { qualityReport: await digestFile(qualityPath) } : {}) }, generatedAt: new Date().toISOString(), manualVisualReviewRequired: false };
@@ -164,12 +189,12 @@ export async function exportEditablePptx(graph: PresentationObjectGraphV1, outpu
       else if (object.type === "raster-region") slide.addImage({ path: object.path, objectName: object.id, ...box });
       else if (object.type === "svg") slide.addImage({ data: `data:image/svg+xml;base64,${Buffer.from(object.svg).toString("base64")}`, objectName: object.id, ...box });
       else if (object.type === "connector") {
-        for (let index = 0; index < object.points.length - 1; index++) { const start = object.points[index]!; const end = object.points[index + 1]!; slide.addShape(pptx.ShapeType.line, { objectName: `${object.id}-${index + 1}`, x: start.x / input.width * 13.333, y: start.y / input.height * 7.5, w: (end.x - start.x) / input.width * 13.333, h: (end.y - start.y) / input.height * 7.5, line: { color: cleanColor(object.stroke), width: 1.2, dashType: object.dashed ? "dash" : "solid", endArrowType: index === object.points.length - 2 && object.endArrow ? "triangle" : "none" } }); }
+        for (let index = 0; index < object.points.length - 1; index++) { const start = object.points[index]!; const end = object.points[index + 1]!; slide.addShape(pptx.ShapeType.line, { objectName: `${object.id}-${index + 1}`, x: Math.min(start.x, end.x) / input.width * 13.333, y: Math.min(start.y, end.y) / input.height * 7.5, w: Math.abs(end.x - start.x) / input.width * 13.333, h: Math.abs(end.y - start.y) / input.height * 7.5, flipH: end.x < start.x, flipV: end.y < start.y, line: { color: cleanColor(object.stroke), width: 1.2, dashType: object.dashed ? "dash" : "solid", endArrowType: index === object.points.length - 2 && object.endArrow ? "triangle" : "none" } }); }
         if (object.label && object.points.length > 1) { const middle = object.points[Math.floor(object.points.length / 2)]!; slide.addText(object.label, { objectName: `${object.id}-label`, x: middle.x / input.width * 13.333 - 0.45, y: middle.y / input.height * 7.5 - 0.1, w: 0.9, h: 0.2, margin: 0, fontSize: 8, align: "center", color: cleanColor(object.stroke), fill: { color: "FFFFFF", transparency: 10 }, fit: "shrink" }); }
       }
     }
   }
-  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output });
+  await mkdir(dirname(resolve(output)), { recursive: true }); await pptx.writeFile({ fileName: output }); await stripGeneratedNotesPackage(output);
   const standard = await validatePptxOpenXmlPackage(output);
   const summary = summarizeGraph(graph); const backend = detectRenderBackend(); const renderEvidence = backend ? await renderBackPptx(output, backend) : undefined;
   const artifactHashes = { output: await digestFile(output), ...(renderEvidence ? { renderEvidence: await digestFile(renderEvidence) } : {}), ...(qualityPath ? { qualityReport: await digestFile(qualityPath) } : {}) };

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import JSZip from "jszip";
@@ -61,6 +61,25 @@ describe("HTML builds", () => {
       expect(unzip.status, unzip.stderr).toBe(0);
       expect(unzip.stdout).toContain('<a:srcRect l="25000" r="25000" t="10000" b="10000"/>');
       expect(unzip.stdout).toContain('descr="Hero crop"');
+      const archive = await JSZip.loadAsync(await readFile(output));
+      expect(Object.keys(archive.files).filter((part) => part.startsWith("ppt/notesMasters/") || part.startsWith("ppt/notesSlides/"))).toEqual([]);
+      const presentationRelationships = await archive.file("ppt/_rels/presentation.xml.rels")!.async("string");
+      expect(presentationRelationships.split(/\r?\n/).filter((line) => line.includes("<Relationship ")).length).toBeGreaterThan(0);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("normalizes reversed connector segments to nonnegative Open XML extents", async () => {
+    const root = await mkdtemp(join(tmpdir(), "slides-studio-export-connectors-"));
+    try {
+      const output = join(root, "connectors.pptx");
+      await exportEditablePptx({ schemaVersion: 1, title: "Connectors", slides: [{ id: "s1", width: 1000, height: 500, objects: [{ id: "reverse", sourceId: "reverse", sourceKind: "diagram", type: "connector", x: 100, y: 100, width: 300, height: 200, zIndex: 1, native: true, points: [{ x: 400, y: 300 }, { x: 400, y: 100 }, { x: 100, y: 100 }], stroke: "#123456", endArrow: true }] }] }, output);
+      const archive = await JSZip.loadAsync(await readFile(output));
+      const slide = await archive.file("ppt/slides/slide1.xml")!.async("string");
+      expect(slide).not.toMatch(/<a:ext\b[^>]*(?:cx|cy)="-/);
+      expect(slide).toContain('name="reverse-1"');
+      expect(slide).toContain('name="reverse-2"');
     } finally {
       await rm(root, { recursive: true, force: true });
     }

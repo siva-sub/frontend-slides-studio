@@ -143,12 +143,15 @@ pnpm smoke
 
 `pnpm check` runs builds, typechecks, unit tests, generated-data drift checks, provenance checks, clean-room checks, and integration synchronization. `pnpm smoke` exercises Studio editing, all diagram gallery renders, asset generation, motion and transitions, PDF/raster PPTX export, and editable-PPTX render-back gates.
 
+With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillow, and Poppler installed, run `pnpm check:pptx-external-compat` for the seven-artifact external compatibility matrix. It records Microsoft Open XML SDK, direct `ppt_rs::validate_package_bytes()`, repair, python-pptx, OfficeCLI render, and LibreOffice render-back evidence. See [External PPTX Compatibility](docs/pptx-external-compatibility.md).
+
 ## Documentation
 
 - [Getting Started](docs/getting-started.md)
 - [Implementation Status](docs/status.md)
 - [Architecture](docs/architecture.md)
 - [Security Model](docs/security.md)
+- [External PPTX Compatibility](docs/pptx-external-compatibility.md)
 - [Clean-Room Policy](docs/clean-room-dashi.md)
 - [Original Upstream README](docs/upstream-frontend-slides-readme.md)
 
