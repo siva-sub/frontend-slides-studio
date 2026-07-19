@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -21,7 +22,8 @@ const reservePort = () => new Promise((resolvePort, reject) => {
 });
 const port = await reservePort();
 const base = `http://127.0.0.1:${port}`;
-const server = spawn("pnpm", ["--filter", "@slides-studio/studio", "dev"], { cwd: root, env: { ...process.env, SLIDES_STUDIO_INITIAL_DECK: sourcePath, SLIDES_STUDIO_SESSION_TOKEN: token, SLIDES_STUDIO_STUDIO_PORT: String(port) }, stdio: ["ignore", "pipe", "pipe"] });
+const viteEntry = resolve(root, "apps/studio/node_modules/vite/bin/vite.js");
+const server = spawn(process.execPath, [viteEntry], { cwd: resolve(root, "apps/studio"), env: { ...process.env, SLIDES_STUDIO_INITIAL_DECK: sourcePath, SLIDES_STUDIO_SESSION_TOKEN: token, SLIDES_STUDIO_STUDIO_PORT: String(port) }, stdio: ["ignore", "pipe", "pipe"] });
 let serverLog = "";
 server.stdout.on("data", (chunk) => { serverLog += chunk.toString(); });
 server.stderr.on("data", (chunk) => { serverLog += chunk.toString(); });
@@ -118,6 +120,11 @@ try {
   console.log(JSON.stringify({ ok: true, sessionId: launch.body.sessionId, notesIsolated: true, bidirectional: true, reconnect: true }));
 } finally {
   await browser?.close();
-  server.kill("SIGTERM");
+  if (server.exitCode === null) {
+    server.kill("SIGTERM");
+    await Promise.race([once(server, "exit"), new Promise((resolveWait) => setTimeout(resolveWait, 3000))]);
+    if (server.exitCode === null) { server.kill("SIGKILL"); await once(server, "exit"); }
+  }
+  server.stdout.destroy(); server.stderr.destroy();
   await rm(tempRoot, { recursive: true, force: true });
 }
