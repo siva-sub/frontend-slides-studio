@@ -96,9 +96,20 @@ function AudienceSurface({ html, index, slideCount, reducedMotion, connected, on
   const frame = useRef<HTMLIFrameElement>(null);
   const postState = () => frame.current?.contentWindow?.postMessage({ type: "slides-studio:presentation-state", index, reducedMotion }, "*");
   useEffect(postState, [index, reducedMotion, html]);
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow || event.data?.type !== "slides-studio:presentation-command") return;
+      if (event.data.command === "next") onNext();
+      else if (event.data.command === "previous") onPrevious();
+      else if (event.data.command === "first") onFirst();
+      else if (event.data.command === "last") onLast();
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [onNext, onPrevious, onFirst, onLast]);
   useAudienceKeyboard(onNext, onPrevious, onFirst, onLast, () => { void enterFullscreen(); }, onExit);
   return <main className="presentation-audience" data-reduced-motion={reducedMotion}>
-    <iframe ref={frame} title={title} sandbox="allow-scripts" srcDoc={html} onLoad={postState} />
+    <iframe ref={frame} title={title} sandbox="allow-scripts" allow="fullscreen" allowFullScreen srcDoc={html} onLoad={postState} />
     <div className="audience-status presenter-tools" aria-live="polite"><span className={connected ? "connected" : "solo"}>{connected ? "Presenter connected" : "Presentation only"}</span><b>{index + 1} / {slideCount}</b></div>
     <div className="audience-actions presenter-tools">
       <button onClick={onPrevious} disabled={index === 0} aria-label="Previous slide">←</button>
@@ -144,8 +155,8 @@ function PresenterView({ bootstrap }: { bootstrap: PresentationBootstrap }) {
   const audienceConnected = view.peers.some((peer) => peer.role === "audience" && peer.connected);
   return <main className="presenter-view" data-reduced-motion={reducedMotion}>
     <header><div><span className="presenter-kicker">PRESENTER VIEW</span><h1>{bootstrap.deckId.split(":")[0]}</h1></div><div className={`connection-pill ${audienceConnected ? "connected" : "disconnected"}`}>{audienceConnected ? "Audience connected" : "Audience disconnected"}</div></header>
-    <section className="presenter-current"><span>Current · {view.state.slideIndex + 1}</span>{current ? <iframe title="Current slide preview" sandbox="allow-scripts" srcDoc={current.html} /> : <div className="preview-empty">Current slide unavailable</div>}</section>
-    <section className="presenter-next"><span>Next</span>{upcoming ? <iframe title="Next slide preview" sandbox="allow-scripts" srcDoc={upcoming.html} /> : <div className="preview-empty">End of presentation</div>}</section>
+    <section className="presenter-current"><span>Current · {view.state.slideIndex + 1}</span>{current ? <iframe title="Current slide preview" sandbox="allow-scripts" srcDoc={current.html} tabIndex={-1} aria-hidden="true" /> : <div className="preview-empty">Current slide unavailable</div>}</section>
+    <section className="presenter-next"><span>Next</span>{upcoming ? <iframe title="Next slide preview" sandbox="allow-scripts" srcDoc={upcoming.html} tabIndex={-1} aria-hidden="true" /> : <div className="preview-empty">End of presentation</div>}</section>
     <section className="presenter-metrics">
       <div><small>Elapsed</small><strong>{formatElapsed(view.elapsedMs)}</strong></div>
       <div><small>Clock</small><strong>{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</strong></div>

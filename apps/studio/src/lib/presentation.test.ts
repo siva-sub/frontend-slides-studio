@@ -26,6 +26,8 @@ describe("presentation client", () => {
     expect(audience).not.toContain("Secret");
     expect(new DOMParser().parseFromString(audience, "text/html").querySelector("base")?.getAttribute("href")).toBe("/api/presentation-assets/p1/cap/");
     expect(audience).toContain("slides-studio:presentation-state");
+    expect(audience).toContain("slides-studio:presentation-command");
+    expect(audience).toContain("requestFullscreen");
     expect(presentationSlideIds(deck)).toEqual(["s1", "s3"]);
   });
 

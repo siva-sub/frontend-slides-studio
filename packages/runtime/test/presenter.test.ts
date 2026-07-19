@@ -66,6 +66,19 @@ describe("PresentationSessionController", () => {
     audience.destroy(); presenter.destroy();
   });
 
+  it("rejects malformed payloads without throwing or poisoning later valid state", () => {
+    const hub = new MemoryHub();
+    const receiver = controller(hub, "audience", "receiver");
+    const base = { namespace: "slides-studio-presentation" as const, protocolVersion: 1 as const, sessionId: "session-1", deckId: "deck-1", revision: REVISION, senderRole: "presenter" as const, senderId: "malformed", sentAt: 10_000 };
+    expect(() => receiver.receive({ ...base, seq: 100, type: "presentation:state" })).not.toThrow();
+    expect(receiver.receive({ ...base, seq: 101, type: "presentation:timer", status: "running", action: "resume", timer: { running: true, elapsedMs: -1, anchorEpochMs: null } })).toBe(false);
+    expect(receiver.receive({ ...base, seq: -1, type: "presentation:heartbeat", currentSlideIndex: 0 })).toBe(false);
+    expect(receiver.receive({ ...base, seq: 1_000, type: "presentation:navigation", slideIndex: 1, slideId: "wrong", slideCount: 3 })).toBe(false);
+    expect(receiver.receive({ ...base, seq: 5, type: "presentation:navigation", slideIndex: 1, slideId: "slide-02", slideCount: 3 })).toBe(true);
+    expect(receiver.currentIndex).toBe(1);
+    receiver.destroy();
+  });
+
   it("resolves equal Lamport sequences deterministically by sender ID", () => {
     const hub = new MemoryHub();
     const receiver = controller(hub, "audience", "receiver");

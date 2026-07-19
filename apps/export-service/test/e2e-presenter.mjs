@@ -61,14 +61,22 @@ try {
   assert(await presenter.frameLocator('iframe[title="Current slide preview"]').locator("h1").textContent() === "Opening", "Presenter current preview is wrong");
   assert(await presenter.frameLocator('iframe[title="Next slide preview"]').locator("h1").textContent() === "Diagram path", "Presenter next preview is wrong");
 
-  await presenter.getByRole("button", { name: "Next →" }).click();
+  const audienceDeck = audience.frames().find((frame) => frame.name() === "") ?? audience.frames().find((frame) => frame !== audience.mainFrame());
+  const audiencePresentationFrame = audience.frames().find((frame) => frame !== audience.mainFrame() && frame.url() === "about:srcdoc");
+  assert(audiencePresentationFrame || audienceDeck, "Audience presentation iframe was not available");
+  const focusedFrame = audiencePresentationFrame ?? audienceDeck;
+  await focusedFrame.evaluate(() => { document.documentElement.requestFullscreen = async () => { document.documentElement.dataset.fullscreenRequested = "true"; }; document.body.focus(); });
+  await focusedFrame.locator("body").click({ position: { x: 20, y: 20 } });
+  await audience.keyboard.press("f");
+  await focusedFrame.waitForFunction(() => document.documentElement.dataset.fullscreenRequested === "true");
+  await audience.keyboard.press("ArrowRight");
   await presenter.frameLocator('iframe[title="Current slide preview"]').locator("h1", { hasText: "Diagram path" }).waitFor();
   await audience.frameLocator('iframe[title="Audience presentation"]').locator(".slide.active h1", { hasText: "Diagram path" }).waitFor();
   await audience.frameLocator('iframe[title="Audience presentation"]').locator("img[alt^='Two nodes']").waitFor();
   assert(await audience.frameLocator('iframe[title="Audience presentation"]').locator("img[alt^='Two nodes']").evaluate((image) => image.complete && image.naturalWidth === 800), "Deck-local diagram asset did not load through the contained presentation route");
   assert((await presenter.locator(".presenter-notes").textContent()).includes("left to right"), "Diagram slide notes are not synchronized");
 
-  await audience.keyboard.press("ArrowRight");
+  await presenter.getByRole("button", { name: "Next →" }).click();
   await presenter.frameLocator('iframe[title="Current slide preview"]').locator("h1", { hasText: "Finish" }).waitFor();
   assert((await presenter.locator(".presenter-metrics").textContent()).includes("3 / 3"), "Skipped slide was not excluded from progress");
   assert((await presenter.locator(".presenter-notes").textContent()).includes("Pause for questions"), "Notes did not skip the excluded slide");

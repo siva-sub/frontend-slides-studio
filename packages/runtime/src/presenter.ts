@@ -43,28 +43,55 @@ export interface PresentationSessionControllerOptions extends PresentationSessio
 
 interface LamportTuple { seq: number; senderId: string }
 
-const MESSAGE_TYPES = new Set([
-  "presentation:hello",
-  "presentation:state",
-  "presentation:navigation",
-  "presentation:timer",
-  "presentation:heartbeat",
-  "presentation:goodbye",
-]);
+const ROLES = new Set(["studio", "presenter", "audience"]);
+const STATUSES = new Set(["idle", "running", "paused", "ended"]);
+const STATE_REASONS = new Set(["initial", "navigation", "timer", "reconnect"]);
+const TIMER_ACTIONS = new Set(["start", "pause", "resume", "reset", "end"]);
+const GOODBYE_REASONS = new Set(["closed", "reloaded", "ended"]);
+const nonnegativeInteger = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
+const nonemptyString = (value: unknown): value is string => typeof value === "string" && value.length > 0;
+
+function isTimer(value: unknown): value is PresentationTimer {
+  if (!value || typeof value !== "object") return false;
+  const timer = value as Record<string, unknown>;
+  if (typeof timer.running !== "boolean" || !nonnegativeInteger(timer.elapsedMs)) return false;
+  if (timer.running) return nonnegativeInteger(timer.anchorEpochMs);
+  return timer.anchorEpochMs === null;
+}
+
+function isState(value: unknown): value is PresentationState {
+  if (!value || typeof value !== "object") return false;
+  const state = value as Record<string, unknown>;
+  return nonnegativeInteger(state.slideIndex)
+    && nonemptyString(state.slideId)
+    && nonnegativeInteger(state.slideCount)
+    && Number(state.slideCount) > 0
+    && Number(state.slideIndex) < Number(state.slideCount)
+    && STATUSES.has(String(state.status))
+    && isTimer(state.timer);
+}
 
 function isSessionMessage(value: unknown): value is PresentationSessionMessage {
   if (!value || typeof value !== "object") return false;
   const message = value as Record<string, unknown>;
-  return message.namespace === "slides-studio-presentation"
-    && message.protocolVersion === 1
-    && typeof message.sessionId === "string"
-    && typeof message.deckId === "string"
-    && typeof message.revision === "string"
-    && Number.isSafeInteger(message.seq)
-    && typeof message.senderRole === "string"
-    && typeof message.senderId === "string"
-    && Number.isSafeInteger(message.sentAt)
-    && MESSAGE_TYPES.has(String(message.type));
+  if (message.namespace !== "slides-studio-presentation"
+    || message.protocolVersion !== 1
+    || !nonemptyString(message.sessionId)
+    || !nonemptyString(message.deckId)
+    || !nonemptyString(message.revision)
+    || !/^[a-f0-9]{64}$/i.test(message.revision)
+    || !nonnegativeInteger(message.seq)
+    || !ROLES.has(String(message.senderRole))
+    || !nonemptyString(message.senderId)
+    || !nonnegativeInteger(message.sentAt)
+    || typeof message.type !== "string") return false;
+  if (message.type === "presentation:hello") return typeof message.wantsState === "boolean";
+  if (message.type === "presentation:state") return isState(message.state) && STATE_REASONS.has(String(message.reason));
+  if (message.type === "presentation:navigation") return nonnegativeInteger(message.slideIndex) && nonemptyString(message.slideId) && nonnegativeInteger(message.slideCount) && Number(message.slideCount) > 0 && Number(message.slideIndex) < Number(message.slideCount);
+  if (message.type === "presentation:timer") return STATUSES.has(String(message.status)) && isTimer(message.timer) && TIMER_ACTIONS.has(String(message.action));
+  if (message.type === "presentation:heartbeat") return nonnegativeInteger(message.currentSlideIndex);
+  if (message.type === "presentation:goodbye") return GOODBYE_REASONS.has(String(message.reason));
+  return false;
 }
 
 function compareTuple(left: LamportTuple, right: LamportTuple): number {
@@ -207,7 +234,6 @@ export class PresentationSessionController {
     if (!["presentation:state", "presentation:navigation", "presentation:timer"].includes(message.type)) return false;
     const tuple = { seq: message.seq, senderId: message.senderId };
     if (compareTuple(tuple, this.#lastApplied) <= 0) return false;
-    this.#lastApplied = tuple;
     if (message.type === "presentation:state") {
       if (message.state.slideCount !== this.slideIds.length || this.slideIds[message.state.slideIndex] !== message.state.slideId) return false;
       this.#state = cloneState(message.state);
@@ -217,6 +243,7 @@ export class PresentationSessionController {
     } else {
       this.#state = { ...this.#state, status: message.status, timer: cloneTimer(message.timer) };
     }
+    this.#lastApplied = tuple;
     this.#emitState(message);
     return true;
   }
