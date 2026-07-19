@@ -206,7 +206,7 @@ async function main() {
   check(allFeaturesProbe.status === 0 || knownMcpDefect, "ppt-rs all-features probe failed for a reason other than the documented rmcp Content API defect");
   upstreamSuite = {
     nonMcp: { command: "cargo test --workspace --all-targets --features cli,web2ppt", status: nonMcpSuite.status, ...nonMcpTotals },
-    allFeatures: { command: "cargo test --workspace --all-targets --all-features", compileProbeStatus: allFeaturesProbe.status, passed: allFeaturesProbe.status === 0, knownUpstreamDefect: knownMcpDefect, diagnostic: knownMcpDefect ? "Pinned source imports rmcp::model::Content, but locked rmcp 2.2.0 exposes ContentBlock." : undefined },
+    allFeatures: { requestedCommand: "cargo test --workspace --all-targets --all-features", executedProbeCommand: "cargo test --workspace --all-targets --all-features --no-run", compileProbeStatus: allFeaturesProbe.status, passed: allFeaturesProbe.status === 0, knownUpstreamDefect: knownMcpDefect, diagnostic: knownMcpDefect ? "Pinned source imports rmcp::model::Content, but locked rmcp 2.2.0 exposes ContentBlock." : undefined },
   };
 
   const pptcliBuild = command("cargo", ["build", "--quiet", "--manifest-path", join(pptRsRoot, "Cargo.toml"), "--features", "cli", "--bin", "pptcli"], { timeout: 600_000 });

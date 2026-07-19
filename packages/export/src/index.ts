@@ -35,6 +35,8 @@ function relationshipAttributes(tag: string): Record<string, string> {
   return Object.fromEntries([...tag.matchAll(/([A-Za-z][\w:]*)="([^"]*)"/g)].map((match) => [match[1]!, match[2]!]));
 }
 
+// PptxGenJS emits auto-generated notes parts that fail external schema/relationship checks.
+// Studio has no authored-notes contract yet, so removing that unused package surface is intentional.
 async function stripGeneratedNotesPackage(path: string): Promise<void> {
   const archive = await JSZip.loadAsync(await readFile(path), { checkCRC32: true });
   const removeNotesRelationships = async (relationshipPath: string): Promise<void> => {
