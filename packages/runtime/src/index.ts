@@ -4,6 +4,8 @@ import { createTransitionSession, preloadAdjacentSlides, type TransitionSession 
 
 export { MotionController, readMotionProgram } from "./motion.js";
 export { createTransitionSession, effectiveTransitionSpec, preloadAdjacentSlides, sanitizeTransitionClone, transitionFrames } from "./transitions.js";
+export { BroadcastChannelPresentationTransport, PresentationSessionController, presentationChannelName } from "./presenter.js";
+export type { PresentationPeer, PresentationSessionControllerOptions, PresentationSessionIdentity, PresentationTransport } from "./presenter.js";
 export type RuntimeMode = "present" | "author" | "export";
 
 export interface SlidesRuntimeOptions {

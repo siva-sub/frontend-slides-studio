@@ -11,7 +11,10 @@ import {
   motionIntentSchema,
   motionProgramSchema,
   parseDiagramSpec,
+  parsePresentationSessionMessage,
   parseStudioMessage,
+  presentationSessionMessageSchema,
+  presentationStateSchema,
   assetManifestSchema,
   assetPlanSchema,
   assetJobSchema,
@@ -103,6 +106,31 @@ describe("protocol contracts", () => {
       slides: [{ id: "s1", role: "diagram", diagram: v2 }],
     });
     expect(deck.slides[0]?.diagram?.schemaVersion).toBe(2);
+  });
+});
+
+describe("presentation sessions", () => {
+  const envelope = { namespace: "slides-studio-presentation" as const, protocolVersion: 1 as const, sessionId: "session-1", deckId: "deck-1", revision: SHA256, seq: 3, senderRole: "presenter" as const, senderId: "presenter-1", sentAt: 1000 };
+  const state = { slideIndex: 1, slideId: "slide-02", slideCount: 3, status: "running" as const, timer: { running: true, elapsedMs: 2000, anchorEpochMs: 1000 } };
+
+  it("accepts typed notes-free state, navigation, timer, and lifecycle messages", () => {
+    expect(parsePresentationSessionMessage({ ...envelope, type: "presentation:state", state, reason: "navigation" }).type).toBe("presentation:state");
+    expect(presentationSessionMessageSchema.parse({ ...envelope, type: "presentation:navigation", slideIndex: 2, slideId: "slide-03", slideCount: 3 }).type).toBe("presentation:navigation");
+    expect(presentationSessionMessageSchema.parse({ ...envelope, type: "presentation:timer", status: "paused", timer: { running: false, elapsedMs: 3000, anchorEpochMs: null }, action: "pause" }).type).toBe("presentation:timer");
+    expect(presentationSessionMessageSchema.parse({ ...envelope, type: "presentation:heartbeat", currentSlideIndex: 1 }).type).toBe("presentation:heartbeat");
+    expect(presentationSessionMessageSchema.parse({ ...envelope, type: "presentation:goodbye", reason: "closed" }).type).toBe("presentation:goodbye");
+  });
+
+  it("rejects invalid identities, slide bounds, and inconsistent timer anchors", () => {
+    expect(() => parsePresentationSessionMessage({ ...envelope, revision: "not-a-hash", type: "presentation:hello", wantsState: true })).toThrow();
+    expect(() => parsePresentationSessionMessage({ ...envelope, type: "presentation:navigation", slideIndex: 3, slideId: "slide-04", slideCount: 3 })).toThrow(/slideIndex/);
+    expect(() => presentationStateSchema.parse({ ...state, timer: { running: true, elapsedMs: 0, anchorEpochMs: null } })).toThrow(/anchor/);
+    expect(() => presentationStateSchema.parse({ ...state, timer: { running: false, elapsedMs: 0, anchorEpochMs: 1000 } })).toThrow(/paused/);
+  });
+
+  it("does not define a notes field on shared messages", () => {
+    const parsed = parsePresentationSessionMessage({ ...envelope, type: "presentation:state", state, reason: "initial", notes: "private" });
+    expect("notes" in parsed).toBe(false);
   });
 });
 

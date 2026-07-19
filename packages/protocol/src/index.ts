@@ -1050,6 +1050,63 @@ export const qualityReportSchema = z.object({
 export type QualityReport = z.infer<typeof qualityReportSchema>;
 
 // ---------------------------------------------------------------------------
+// Presentation session contracts
+// ---------------------------------------------------------------------------
+
+export const presentationRoleSchema = z.enum(["studio", "presenter", "audience"]);
+export type PresentationRole = z.infer<typeof presentationRoleSchema>;
+
+export const presentationStatusSchema = z.enum(["idle", "running", "paused", "ended"]);
+export type PresentationStatus = z.infer<typeof presentationStatusSchema>;
+
+export const presentationTimerSchema = z.object({
+  running: z.boolean(),
+  elapsedMs: z.number().int().nonnegative(),
+  anchorEpochMs: z.number().int().nonnegative().nullable(),
+}).superRefine((timer, context) => {
+  if (timer.running && timer.anchorEpochMs === null) context.addIssue({ code: z.ZodIssueCode.custom, path: ["anchorEpochMs"], message: "a running presentation timer requires an anchor" });
+  if (!timer.running && timer.anchorEpochMs !== null) context.addIssue({ code: z.ZodIssueCode.custom, path: ["anchorEpochMs"], message: "a paused presentation timer cannot retain an anchor" });
+});
+export type PresentationTimer = z.infer<typeof presentationTimerSchema>;
+
+export const presentationStateSchema = z.object({
+  slideIndex: z.number().int().nonnegative(),
+  slideId: z.string().min(1),
+  slideCount: z.number().int().positive(),
+  status: presentationStatusSchema,
+  timer: presentationTimerSchema,
+}).superRefine((state, context) => {
+  if (state.slideIndex >= state.slideCount) context.addIssue({ code: z.ZodIssueCode.custom, path: ["slideIndex"], message: "slideIndex must be smaller than slideCount" });
+});
+export type PresentationState = z.infer<typeof presentationStateSchema>;
+
+const presentationEnvelopeShape = {
+  namespace: z.literal("slides-studio-presentation"),
+  protocolVersion: z.literal(1),
+  sessionId: z.string().min(1).max(128),
+  deckId: z.string().min(1).max(512),
+  revision: z.string().regex(/^[a-f0-9]{64}$/i),
+  seq: z.number().int().nonnegative(),
+  senderRole: presentationRoleSchema,
+  senderId: z.string().min(1).max(128),
+  sentAt: z.number().int().nonnegative(),
+} as const;
+
+export const presentationSessionMessageSchema = z.discriminatedUnion("type", [
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:hello"), wantsState: z.boolean().default(true) }),
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:state"), state: presentationStateSchema, reason: z.enum(["initial", "navigation", "timer", "reconnect"]) }),
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:navigation"), slideIndex: z.number().int().nonnegative(), slideId: z.string().min(1), slideCount: z.number().int().positive() }),
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:timer"), status: presentationStatusSchema, timer: presentationTimerSchema, action: z.enum(["start", "pause", "resume", "reset", "end"]) }),
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:heartbeat"), currentSlideIndex: z.number().int().nonnegative() }),
+  z.object({ ...presentationEnvelopeShape, type: z.literal("presentation:goodbye"), reason: z.enum(["closed", "reloaded", "ended"]) }),
+]).superRefine((message, context) => {
+  if (message.type === "presentation:navigation" && message.slideIndex >= message.slideCount) context.addIssue({ code: z.ZodIssueCode.custom, path: ["slideIndex"], message: "slideIndex must be smaller than slideCount" });
+});
+export type PresentationSessionMessage = z.infer<typeof presentationSessionMessageSchema>;
+
+export function parsePresentationSessionMessage(input: unknown): PresentationSessionMessage { return presentationSessionMessageSchema.parse(input); }
+
+// ---------------------------------------------------------------------------
 // Studio / export contracts (legacy — preserved unchanged)
 // ---------------------------------------------------------------------------
 
