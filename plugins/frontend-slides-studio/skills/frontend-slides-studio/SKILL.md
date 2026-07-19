@@ -1,6 +1,6 @@
 ---
 name: frontend-slides-studio
-description: Operates Frontend Slides Studio to create, import, visually edit, diagram, animate, validate, and export local-first HTML presentations. Use when a user asks for a presentation, slide deck, Studio editor session, arbitrary HTML deck editing, typed diagrams, media generation or reframing, reference-motion analysis, deterministic PDF/raster PPTX, or evidence-gated editable PPTX.
+description: Operates Frontend Slides Studio to create, import, visually edit, diagram, animate, present with synchronized speaker/audience views, validate, and export local-first HTML presentations. Use when a user asks for a presentation, slide deck, Studio editor session, presenter view, speaker notes, arbitrary HTML deck editing, typed diagrams, media generation or reframing, reference-motion analysis, deterministic PDF/raster PPTX, or evidence-gated editable PPTX.
 license: MIT
 compatibility: Node.js 20+ and pnpm 11.3 for core Studio/CLI use; optional Playwright Chromium, Python 3.10+, ffmpeg/ffprobe, Poppler, LibreOffice, and provider credentials are required only by matching workflows.
 metadata:
@@ -33,7 +33,9 @@ Operate the complete Frontend Slides Studio pipeline. A normal request should pr
 - **Stable identity:** every slide has `data-slide-id`; editable elements have `data-object-id`.
 - **Fixed stage:** author new decks at 1920×1080 and scale uniformly. Imported 16:9 stages preserve their measured intrinsic size.
 - **Local first:** no account, cloud persistence, or hosted collaboration is required.
+- **Show the idea:** one purposeful picture, chart, table, or typed diagram should carry the page when it explains the takeaway better than prose. Visual evidence must teach; it must not decorate.
 - **Real assets stay real:** logos, product UI, medical images, evidence, charts, and tables are preserved unless the user explicitly allows redrawing.
+- **Private notes stay private:** speaker notes persist in source HTML and editable PPTX but never enter audience, presentation-only, share, thumbnail, or shared-session state.
 - **Motion provenance:** measured timing, semantic intent, and runtime tracks remain separate.
 - **Static exports settle semantically:** entrances finish, loops freeze at a declared poster position, media seeks to poster time, and authoring chrome disappears.
 - **Evidence before delivery:** validate, render, and inspect the artifact. Editable PPTX cannot reach `passed` without fresh render-back and visual review.
@@ -47,7 +49,8 @@ For a new deck, gather in one round:
 4. reading-first or speaker-led density;
 5. whether any slide explicitly needs visual-master treatment;
 6. required outputs: source HTML, author HTML, share HTML, PDF, raster PPTX, or editable PPTX evidence build;
-7. for editable PPTX, which slide objects must remain native and which bounded fallback regions are acceptable.
+7. for editable PPTX, which slide objects must remain native and which bounded fallback regions are acceptable;
+8. whether the user needs presenter/audience views, a one-screen Presentation-only fallback, speaker-note authoring, and editable-PPTX notes export.
 
 For an import, inspect the file first. Do not ask the user to restate facts visible in the artifact.
 </intake>
@@ -62,11 +65,13 @@ For an import, inspect the file first. Do not ask the user to restate facts visi
 - Reference animation or object motion → read `workflows/motion.md`, then use the Studio motion and transition controls.
 - Explicit art-directed image slide → read `workflows/visual-master.md`.
 - Editable PPTX, PowerPoint editability, or PPTX-oriented HTML → read `workflows/pptx-html.md`, then `references/pptx-native.md` and `workflows/export.md`.
+- Presenter view, audience view, presentation mode, rehearsal, speaker notes, fullscreen, projector, second screen, or Win+P → read `workflows/present.md`, then `references/presenter-view.md`.
 - Validation, build, quality, PDF, or raster PPTX → read `workflows/export.md`.
 - Native PowerPoint shapes, slide transitions, OOXML, shape discovery, or XML compatibility → read `workflows/pptx-html.md`, then `references/pptx-native.md` and `workflows/export.md`.
 - Contracts, stable IDs, provenance, or review states → read `references/contracts.md`.
 - Command uncertainty → read `references/commands.md`.
 - UI-control uncertainty → read `references/studio-controls.md`.
+- Display placement, popup, fullscreen, audience privacy, or synchronization uncertainty → read `references/presenter-view.md`.
 - Launch, save, preview, service, or export failure → read `references/troubleshooting.md`.
 </routing>
 
@@ -83,6 +88,8 @@ When Studio is requested or selected by default, do not stop after writing `deck
 - Never copy Dashi PPT code, themes, layouts, or exporter output into this repository. Behavioral comparison may inform an independently implemented workflow only.
 - Never discover API keys by walking a user's project for `.env` files.
 - Never describe raster PPTX as editable.
+- Never place speaker notes in audience HTML, shared presentation messages, thumbnails, or visible slide content.
+- Never claim a browser can invoke Win+P, switch the operating system to Extend, or enter fullscreen without an audience-window user gesture.
 - Never leave factual text, numbers, chart labels, logos, or evidence outside stable object boundaries in editable-PPTX HTML.
 - Never assume generic CSS is natively editable; treat computed-style classification as runtime-dependent until the export inventory proves otherwise.
 - Never pass an unvalidated shape preset or raw transition fragment into OOXML; use `@slides-studio/pptx-compat`.
@@ -112,7 +119,8 @@ pnpm cli -- build --input deck.html --mode share --output dist/deck.html
 - Stable IDs are present and unique.
 - Editable-PPTX requests include a per-slide object mapping and a passing `pptx html-check` preflight.
 - Layout, diagram, motion, visual-master, PPTX readiness, and safety validators have no blocking errors.
-- Share HTML contains no authoring/private metadata and requires no npm runtime.
-- PDF/PPTX exports identify editability and review status honestly.
+- Share HTML, Audience, and Presentation only contain no authoring/private note metadata.
+- Presenter/Audience requests prove current/next previews, notes, timer, clock, progress, bidirectional navigation, reconnect, reduced motion, and fallback behavior.
+- Editable PPTX preserves authored speaker notes and identifies editability and review status honestly.
 - Final reporting includes the Studio URL, source path, output paths, verification evidence, limitations, and any residual manual review.
 </success_criteria>

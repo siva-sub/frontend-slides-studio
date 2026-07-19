@@ -120,11 +120,13 @@ A typical Studio session is:
 3. Use **Edit** mode to select text or media and change inspector values.
 4. Use **Move** mode to drag, snap, resize, layer, or delete selected objects.
 5. Reorder, duplicate, skip, include, or search slides in the page rail.
-6. Choose a style or recipe, insert a stable-ID diagram, or configure object motion.
+6. Choose a style or recipe, insert a stable-ID diagram, or configure object motion. Prefer a purposeful visual when it explains the slide takeaway better than prose.
 7. Replace and reframe images with contain/cover, focal-point, pan, and zoom controls.
-8. Run the current-page quality audit and focus reported issues.
-9. Wait for `UNSAVED`, then press **Save**. Reload the same authenticated URL to confirm persistence.
-10. Start the local export service and submit the already-prefilled saved path for PDF, raster PPTX, or editable PPTX.
+8. Add private per-page cues in **Speaker notes**. Notes appear in Presenter view and editable PPTX, not on the slide or audience screen.
+9. Run the current-page quality audit and focus reported issues.
+10. Wait for `UNSAVED`, then press **Save**. Reload the same authenticated URL to confirm persistence.
+11. Rehearse through **Present with speaker view** or **Presentation only**.
+12. Start the local export service and submit the already-prefilled saved path for PDF, raster PPTX, or editable PPTX.
 
 The launcher prints its log and stop command. Stop the session when finished:
 
@@ -133,6 +135,20 @@ pnpm studio:stop -- --state .slides-studio/studio-<port>.json
 ```
 
 Use `pnpm dev:studio` only for a welcome-only development session. Studio history keeps up to 50 exact snapshots, and imported decks run in a sandboxed iframe so their scripts and styles cannot take over the host editor.
+
+## Present with Audience and Presenter Views
+
+Dual-window presenting starts from the saved source loaded by `pnpm studio:open`.
+
+1. Add and save speaker notes on each relevant page.
+2. On Windows, press **Win+P** and choose **Extend**. Duplicate mirrors one desktop and cannot keep notes private. On macOS or Linux, disable display mirroring.
+3. Click **Present with speaker view**. Studio opens Presenter and Audience with separate random read-only capabilities; child URLs do not contain the Studio save token.
+4. Presenter shows current and next previews, notes, elapsed time, clock, progress, navigation, timer controls, and audience connection state.
+5. Audience receives sanitized HTML without notes. Move it to the projector, then click **Enter fullscreen** or press **F** inside that window.
+6. Navigate from either window and verify the other follows. Close Audience and use **Reopen audience** to test recovery.
+7. If popups, multiple displays, or BroadcastChannel are unavailable, use **Presentation only**. It runs a notes-free audience view in the current Studio tab and exits with Escape or its exit button.
+
+Window Management placement is permission-gated progressive enhancement. Studio uses it when available but never claims it can change the operating-system display mode. See [Presenter View Design](presenter-view-design.md).
 
 ## Option C: Create or Import with the CLI
 
@@ -189,7 +205,7 @@ pnpm cli -- diagram render \
   --output architecture.svg
 ```
 
-The same normalized diagram primitives feed inline SVG and editable presentation objects. Stable IDs are preserved across both paths.
+The same normalized diagram primitives feed inline SVG, Presenter/Audience previews, and editable presentation objects. Stable IDs are preserved across all paths. The 27 adapters should be chosen by semantic relationship; use diagrams to explain, not decorate.
 
 ## Analyze and Apply Motion
 

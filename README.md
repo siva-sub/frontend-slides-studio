@@ -4,7 +4,7 @@ Frontend Slides Studio is a local-first workbench for creating, importing, editi
 
 The project combines an agent skill, a visual browser editor, a dependency-free presentation runtime, typed diagram and media systems, and deterministic PDF/PPTX export. It is designed for people who want editable source, repeatable rendering, and honest evidence about export quality.
 
-> **Status:** active v0.1. HTML authoring, Studio editing, styles and recipes, all 27 diagram adapters, motion and transitions, quality reports, PDF export, raster PPTX, and evidence-gated editable PPTX are implemented. See [Implementation Status](docs/status.md) for current limits.
+> **Status:** active v0.1. HTML authoring, Studio editing, synchronized audience/presenter views, speaker notes, styles and recipes, all 27 diagram adapters, motion and transitions, quality reports, PDF export, raster PPTX, and evidence-gated editable PPTX are implemented. See [Implementation Status](docs/status.md) for current limits.
 
 ## What You Can Do
 
@@ -13,6 +13,7 @@ The project combines an agent skill, a visual browser editor, a dependency-free 
 - Edit text, move and resize objects, reorder or skip slides, replace media, and use undo/redo in Studio.
 - Choose from 32 licensed style systems, 256 layouts, and 6 deck recipes.
 - Insert deterministic, editable diagrams across 27 business and technical diagram types.
+- Present with synchronized audience and presenter windows, private speaker notes, current/next previews, timer, clock, progress, fullscreen, and a one-screen fallback.
 - Analyze reference video timing, map motion to stable object IDs, and run replay-safe transitions.
 - Generate or reframe assets while preserving supplied logos, evidence, charts, and other fidelity-critical media.
 - Build clean author and share HTML, run deck-wide quality checks, and export PDF or PPTX locally.
@@ -55,9 +56,15 @@ pnpm cli -- new demo.html
 pnpm studio:open -- --input "$(realpath demo.html)"
 ```
 
-The launcher starts a loopback Studio session and prints an authenticated URL such as `http://127.0.0.1:4173/?session=...`. Open the complete URL: the requested deck loads automatically, Save atomically updates only that configured source, and the absolute export path is prefilled. Studio provides sandboxed Browse/Edit/Move modes, slide and media operations, styles and recipes, diagrams, motion, current-page audit, and evidence-gated export. Use `pnpm dev:studio` only for a welcome-only development session.
+The launcher starts a loopback Studio session and prints an authenticated URL such as `http://127.0.0.1:4173/?session=...`. Open the complete URL: the requested deck loads automatically, Save atomically updates only that configured source, and the absolute export path is prefilled. Studio provides sandboxed Browse/Edit/Move modes, slide and media operations, styles and recipes, diagrams, motion, speaker notes, synchronized Presenter/Audience launch, Presentation-only fallback, current-page audit, and evidence-gated export. Use `pnpm dev:studio` only for a welcome-only development session.
 
-### 3. Use the CLI
+### 3. Present with Private Notes
+
+Save the deck in an authenticated `studio:open` session, then use **Present with speaker view**. Studio creates separate role-scoped windows: Presenter shows current/next previews, notes, timer, clock, progress, and controls; Audience receives notes-free HTML and a fullscreen control. On Windows, press **Win+P** and choose **Extend** before moving Audience to the projector. Duplicate mode mirrors one desktop and cannot keep notes private. Browsers cannot invoke Win+P, and fullscreen requires a click or **F** inside Audience.
+
+Use **Presentation only** when there is one display, popups are blocked, or multi-window synchronization is unavailable. This replaces Studio with a notes-free audience view and returns with Escape or **Exit presentation**.
+
+### 4. Use the CLI
 
 ```bash
 pnpm cli -- doctor
@@ -79,8 +86,8 @@ See the complete [Getting Started Guide](docs/getting-started.md) for prerequisi
 | Area | Delivered capability |
 | --- | --- |
 | Agent workflow | Canonical skill plus generated Claude, Codex, Cursor, and plugin integrations for create, import/edit, assets, diagrams, motion, visual masters, validation, and export |
-| Studio | React/Vite/Zustand local editor with an authenticated one-file launch bridge, atomic save-back, sandboxed import, Browse/Edit/Move modes, scale-correct selection and manipulation, snapping, eight-handle resize, layers, slide operations, history, File System Access fallback, media controls, styles, diagrams, motion, quality focus, and export jobs |
-| Runtime | Dependency-free IIFE with fixed-stage navigation, replay-safe WAAPI motion, ten transition kinds, adjacent preload, reduced-motion behavior, and deterministic settled export state |
+| Studio | React/Vite/Zustand local editor with an authenticated one-file launch bridge, atomic save-back, sandboxed import, Browse/Edit/Move modes, scale-correct selection and manipulation, snapping, eight-handle resize, layers, slide operations, history, File System Access fallback, media controls, styles, diagrams, motion, speaker notes, presentation controls, quality focus, and export jobs |
+| Runtime | Dependency-free IIFE with fixed-stage navigation, replay-safe WAAPI motion, ten transition kinds, adjacent preload, reduced-motion behavior, typed presenter-session synchronization, and deterministic settled export state |
 | Styles and recipes | Browser-safe typed registry of 32 Apache-2.0 style systems, 256 layouts, and 6 recipes with deterministic queries, inspection, scaffolding, normalization, and generated-data drift checks |
 | Diagrams | Versioned DiagramSpec contracts and exhaustive deterministic adapters for 27 diagram types, rendered through stable editable primitives to SVG and native presentation objects |
 | Assets and media | MIME-verified content-hashed staging, contain/cover crop geometry, focal point, pan, zoom, rotation, AVIF derivatives, video posters, asset plans, local generation jobs, and evidence bundles |
@@ -104,6 +111,8 @@ See the complete [Getting Started Guide](docs/getting-started.md) for prerequisi
 - HTML-native slides are the default. Visual-master image generation is an explicit per-slide exception.
 - New decks use a 1920×1080 stage. Imported 16:9 decks preserve intrinsic dimensions such as 1280×720 and scale uniformly in preview and export.
 - Every slide and editable object uses a stable ID.
+- A purposeful image, chart, table, or typed diagram should carry the page when it explains the takeaway better than prose.
+- Speaker notes remain private to Presenter and editable PPTX; Audience, Presentation only, thumbnails, and shared state contain no notes.
 - Supplied logos, UI captures, evidence, medical imagery, charts, and tables remain real assets unless redrawing is explicitly authorized.
 - Motion analysis measures **when**. Motion intent decides **what**. Motion programs control runtime tracks.
 - Static export settles entrances, loops, media, transitions, and authoring chrome before capture.
@@ -153,7 +162,7 @@ pnpm check
 pnpm smoke
 ```
 
-`pnpm check` runs builds, typechecks, unit tests, generated-data drift checks, provenance checks, clean-room checks, and integration synchronization. `pnpm smoke` exercises Studio editing, all diagram gallery renders, asset generation, motion and transitions, PDF/raster PPTX export, and editable-PPTX render-back gates.
+`pnpm check` runs builds, typechecks, unit tests, generated-data drift checks, provenance checks, clean-room checks, and integration synchronization. `pnpm smoke` exercises Studio editing, synchronized presenter/audience views and notes isolation, all diagram gallery renders, asset generation, motion and transitions, PDF/raster PPTX export, and editable-PPTX render-back gates. Run `pnpm smoke:presenter` for the focused dual-window acceptance.
 
 With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillow, and Poppler installed, run `pnpm check:pptx-external-compat` for the ten-artifact external compatibility matrix, including all native transitions, all 178 externally validated native shape presets, and editable native table/chart output. It records Microsoft Open XML SDK, direct `ppt_rs::validate_package_bytes()`, repair, python-pptx, OfficeCLI render, and LibreOffice render-back evidence. See [External PPTX Compatibility](docs/pptx-external-compatibility.md).
 
@@ -163,6 +172,7 @@ With the pinned OfficeCLI and `ppt-rs` checkouts plus LibreOffice, Python, Pillo
 - [Implementation Status](docs/status.md)
 - [Architecture](docs/architecture.md)
 - [Security Model](docs/security.md)
+- [Presenter View Design](docs/presenter-view-design.md)
 - [External PPTX Compatibility](docs/pptx-external-compatibility.md)
 - [ppt-rs TypeScript Adaptation Matrix](docs/ppt-rs-adaptation-matrix.md)
 - [ppt-rs Advanced Native Element Evaluation](docs/ppt-rs-advanced-elements-evaluation.md)

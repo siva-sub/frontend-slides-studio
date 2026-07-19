@@ -119,7 +119,9 @@ Emphasize the Q2 margin change. Confirm the source before presenting.
 </script>
 ```
 
-The presentation object graph also accepts a `notes` string on each slide. When notes exist, the exporter preserves notes slides, moves `notesMasterIdLst` into schema order, adds a dedicated `theme2.xml`, repairs the notes-master relationship, and validates the result externally. When no notes are authored, unused PptxGenJS notes parts are removed.
+Studio exposes the same source through **Speaker notes**. Notes are undoable, persist on Save/reload, appear only in Presenter view, and are removed from Audience, Presentation only, thumbnails, and shared session state. Text containing a literal closing-script sequence is stored with explicit base64 metadata and decoded before display or export.
+
+The presentation object graph also accepts a `notes` string on each slide. When notes exist, the exporter preserves notes slides, moves `notesMasterIdLst` into schema order, adds a dedicated `theme2.xml`, repairs the notes-master relationship, and validates the result externally. The editable report records `speakerNotes`; delivery review must inspect the actual PowerPoint notes pane. When no notes are authored, unused PptxGenJS notes parts are removed.
 
 ## Native Tables and Charts
 

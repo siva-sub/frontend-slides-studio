@@ -21,6 +21,17 @@
 - If the stage overflows, verify there is one fixed stage and no nested scaling or CSS `zoom`. Object movement uses scale-correct deltas and individual CSS `translate`.
 </preview_geometry>
 
+<present>
+- **Present with speaker view is disabled:** save the deck and launch it through `pnpm studio:open`; a manual browser file has no role-scoped presentation bridge.
+- **Popup blocked:** allow popups for the loopback Studio origin, then use Reopen audience. Presentation only requires no popup.
+- **Presenter and projector show the same desktop:** the operating system is mirroring. On Windows press Win+P and choose Extend; on macOS/Linux disable mirroring.
+- **Window placement permission denied:** move Audience to the external display manually. Multi-screen placement is progressive enhancement.
+- **Fullscreen did not start:** click Enter fullscreen or press F inside Audience. A click in Studio or Presenter does not satisfy the audience-window user-gesture requirement.
+- **Audience disconnected:** reopen it from Studio or Presenter. Either remaining view can continue navigating.
+- **Notes visible to the audience:** stop presenting. Verify the source uses only `script[type="text/plain"][data-speaker-notes]`, relaunch through Studio, and rerun `pnpm smoke:presenter`; never paste notes into visible slide elements.
+- **Relative media missing:** keep the asset inside the deck directory and use an allowed CSS/image/font/audio/video/JSON/script extension. The presentation asset route is read-only and contained.
+</present>
+
 <export>
 - **Export button says Save before export:** save the current revision first. The service reads the file on disk, not unsaved browser state.
 - **Export source path empty:** authenticated launch pre-fills it. Manual sessions require an absolute saved path.

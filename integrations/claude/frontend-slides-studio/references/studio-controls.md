@@ -10,6 +10,7 @@ The authenticated launch URL loads the configured deck automatically. The editor
 - **Open HTML:** detaches from the launch session and opens another file through browser file access.
 - **Attach folder:** enables content-hashed media staging under `assets/user-media/` when the File System Access API is available.
 - **Download copy:** downloads without overwriting the source.
+- **Present / Present only:** authenticated launch sessions open synchronized presenter and audience windows. Manual sessions enter the same-window notes-free Presentation-only fallback.
 - **Save:** in an authenticated launch session, atomically saves only the configured source file. In a manual session, it uses File System Access or download fallback.
 </top_bar>
 
@@ -36,6 +37,8 @@ The authenticated launch URL loads the configured deck automatically. The editor
 - **Geometry / Layer:** nudge and order the selected object.
 - **Object motion:** choose reveal, fade, slide, scale, draw, focus, loop, blur, wipe, rotate, pulse, or stagger; set duration, delay, and replay; apply or remove.
 - **Page transition:** choose none, crossfade, slide, zoom, circle reveal, clip wipe, pixel grid/bars, or vertical/horizontal slices; set duration, target entrance fraction, and reduced-motion policy.
+- **Speaker notes:** edit private per-page cues. Save notes writes one source element; Clear removes it. Presenter view reads it, Audience/Presentation only strip it, and editable PPTX maps it into the notes pane.
+- **Present:** **Present with speaker view** opens synchronized role-scoped windows from a saved authenticated launch session. **Presentation only** works in the current window without notes. **Reopen audience** restores the last audience capability. Read `presenter-view.md` for Win+P Extend, popup, multi-screen, fullscreen, privacy, and fallback rules.
 - **Native PowerPoint shape:** choose any externally validated preset and insert it with stable `data-pptx-shape` metadata. The browser preview uses CSS; editable PPTX uses native OOXML geometry. Read `pptx-native.md` for advanced attributes.
 - **Editable PPTX readiness:** set the current page to native-oriented, hybrid, raster, or unspecified. Studio then analyzes stable identity, explicit native candidates, runtime-dependent objects, clean plates, untracked text, fallback risks, and invalid metadata. Blockers disable editable export. Hybrid warnings remain reviewable because intentional fallback is supported.
 - **Rendered audit:** runs a current-page non-strict browser audit and lets the operator focus an issue on canvas.
@@ -49,7 +52,8 @@ The authenticated launch URL loads the configured deck automatically. The editor
 4. Apply one logical change at a time and inspect the canvas.
 5. Wait for `UNSAVED`, then Save.
 6. Reload and confirm persistence.
-7. For editable PPTX, compare the readiness panel with the per-slide native/hybrid/raster plan and resolve every blocker.
-8. Run page audit, then deck-wide quality/export when requested.
+7. Add and save speaker notes, then rehearse presenter/audience or Presentation-only behavior when requested.
+8. For editable PPTX, compare the readiness panel with the per-slide native/hybrid/raster plan and resolve every blocker.
+9. Run page audit, then deck-wide quality/export when requested.
 </operator_sequence>
 </studio_controls>

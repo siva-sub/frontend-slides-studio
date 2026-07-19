@@ -22,11 +22,13 @@ const errors: string[] = [];
 for (const required of [
   "workflows/studio.md",
   "workflows/pptx-html.md",
+  "workflows/present.md",
   "references/product-map.md",
   "references/setup.md",
   "references/commands.md",
   "references/studio-controls.md",
   "references/pptx-native.md",
+  "references/presenter-view.md",
   "references/troubleshooting.md",
   "pnpm studio:open",
   "pnpm cli --",
@@ -35,6 +37,9 @@ for (const required of [
 if (!/^compatibility:\s+.+/m.test(skill)) errors.push("SKILL.md lacks a compatibility declaration");
 const pptxWorkflow = contents.get(resolve(skillRoot, "workflows/pptx-html.md")) ?? "";
 for (const required of ["pptx html-check", "data-pptx-intent", "native-oriented", "hybrid", "actual native/fallback counts"]) if (!pptxWorkflow.includes(required)) errors.push(`pptx-html.md is missing ${required}`);
+
+const presenterWorkflow = contents.get(resolve(skillRoot, "workflows/present.md")) ?? "";
+for (const required of ["Present with speaker view", "Presentation only", "Win+P", "speaker notes", "editable PPTX"]) if (!presenterWorkflow.includes(required)) errors.push(`present.md is missing ${required}`);
 
 const setup = contents.get(resolve(skillRoot, "references/setup.md")) ?? "";
 for (const required of [

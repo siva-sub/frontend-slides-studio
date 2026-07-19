@@ -17,6 +17,7 @@ The project selectively adapts permissively licensed ideas and code. Exact impor
 - **yingkitw/ppt-rs** — Apache-2.0 — package-validation rules, native shape-name compatibility, slide-transition XML semantics, repair detection, and HTML/XML test invariants adapted into original TypeScript under `packages/pptx-compat` and associated tests. No Rust source is vendored. Studio corrects upstream schema defects found by Microsoft Open XML SDK validation instead of copying them.
 - **lukesw55/frontend-slides** — MIT fork lineage — deterministic settled-state PDF export and localhost/path-hardening ideas.
 - **millecodex/nerd-slides** — MIT-compatible fork lineage where verified — presenter/editor interaction concepts; behavior is independently reimplemented unless a copied path is listed in provenance.
+- **hakimel/reveal.js** — MIT, commit `a3b940695648aa1c5b0680bc9a5b905cf43020e5` — separate speaker-window, current/upcoming preview, timer, heartbeat, and reconnect behavior studied as a reference. Frontend Slides Studio independently implements typed role capabilities, Lamport stale-message rejection, notes-free shared state, and a Presentation-only fallback; no reveal.js source is copied.
 
 ## Clean-room inspiration only
 

@@ -15,6 +15,7 @@ Use this map before choosing a workflow. Frontend Slides Studio is a coordinated
 | Add page transitions | TransitionSpec and runtime | Select one of ten transition kinds with reduced-motion behavior | Studio transition controls |
 | Reconstruct an art-directed slide | Visual scene tooling | Clean plate, masks, independent overlays, evidence bundle | `workflows/visual-master.md` |
 | Find visual defects | Quality package | Current-page Studio audit plus persisted deck-wide rendered reports | `workflows/export.md` |
+| Rehearse or present | Presenter session protocol and role-scoped launch bridge | Private notes, current/next previews, timer/clock/progress, synchronized audience, multi-screen placement, Presentation-only fallback | `workflows/present.md` |
 | Deliver browser slides | Export package and runtime | Build author HTML and clean self-contained share HTML | `workflows/export.md` |
 | Deliver PDF or raster PPTX | Authenticated export service | Settle motion/media, normalize stage, run quality gate, capture | `workflows/export.md` |
 | Author HTML for editable PPTX | PPTX HTML readiness and presentation object graph | Per-slide intent, stable object mapping, conservative native/fallback preflight | `workflows/pptx-html.md` |
@@ -22,7 +23,7 @@ Use this map before choosing a workflow. Frontend Slides Studio is a coordinated
 
 <workflow_chaining>
 A complete new-deck request normally chains:
-`studio.md` → `create.md` → optional `pptx-html.md` / `diagram.md` / `assets.md` / `motion.md` / `visual-master.md` → `studio.md` save and audit → `export.md`.
+`studio.md` → `create.md` → optional `pptx-html.md` / `diagram.md` / `assets.md` / `motion.md` / `visual-master.md` → `studio.md` save and audit → optional `present.md` rehearsal → `export.md`.
 
 A complete edit request normally chains:
 `studio.md` → `import-edit.md` → optional `pptx-html.md` and other subsystem workflows → `studio.md` save and reload → `export.md` when delivery is requested.
@@ -33,6 +34,7 @@ A complete edit request normally chains:
 - The CLI is the deterministic contract and batch interface.
 - HTML remains the source for HTML-native slides.
 - DiagramSpec, MotionProgram, TransitionSpec, MediaPlacement, and presentation objects remain versioned metadata rather than anonymous DOM guesses.
-- PPTX HTML readiness is a conservative preflight; the export report is the source of truth for actual native/fallback inventory and review status.
+- Presentation sessions share typed slide/timer state but never speaker notes; Presenter reads role-scoped notes and Audience receives sanitized HTML.
+- PPTX HTML readiness is a conservative preflight; the export report is the source of truth for actual native/fallback inventory, speaker-note count, and review status.
 </source_of_truth>
 </product_map>

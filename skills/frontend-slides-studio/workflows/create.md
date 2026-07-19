@@ -6,7 +6,7 @@
 </required_reading>
 
 <process>
-1. Draft `slides_plan.md` with one action-title, one audience takeaway, source evidence, and intended media/diagram treatment per slide. Keep user claims and supplied data verbatim. If editable PPTX is requested, first read `workflows/pptx-html.md` and add each slide's PPTX intent, mandatory-native object IDs, allowed fallback regions, native metadata, and verification method.
+1. Draft `slides_plan.md` with one action-title, one audience takeaway, source evidence, intended media/diagram treatment, and optional speaker cue per slide. Prefer one purposeful picture, chart, table, or typed diagram when it communicates the takeaway more directly than prose. Keep user claims and supplied data verbatim. If editable PPTX is requested, first read `workflows/pptx-html.md` and add each slide's PPTX intent, mandatory-native object IDs, allowed fallback regions, native metadata, and verification method.
 2. Inspect styles and recipes with `pnpm cli -- styles list` and `pnpm cli -- recipes list`. Select a deterministic seed, scaffold the chosen recipe, and query compatible layouts. Validate copy and real media capacity before authoring.
 3. Choose HTML-native for every slide unless an explicit visual-master exception is justified. Use one stable `data-slide-id` per slide and `data-object-id` per editable object. For editable PPTX, keep factual text and semantic content inside stable boundaries and use the smallest planned fallback region.
 4. Create a starter source with:
@@ -14,10 +14,10 @@
    pnpm cli -- new path/to/deck.html
    ```
    Author the planned slides at 1920×1080. Use `.slide` plus `.active`/`.visible`; do not create a responsive scrolling document.
-5. Add versioned DiagramSpec, MotionProgram, TransitionSpec, and MediaPlacement metadata only where the plan requires them. Add validated `data-pptx-shape`, `data-pptx-gradient`, `data-pptx-chart`, table, notes, and local-media contracts when the PPTX plan requires native objects. Do not hard-wire anonymous animations or flatten supported diagrams into screenshots.
+5. Add versioned DiagramSpec, MotionProgram, TransitionSpec, and MediaPlacement metadata only where the plan requires them. Choose among all 27 DiagramSpec types by semantic relationship, not decoration. Add private cues through `script[type="text/plain"][data-speaker-notes]`. Add validated `data-pptx-shape`, `data-pptx-gradient`, `data-pptx-chart`, table, notes, and local-media contracts when the PPTX plan requires native objects. Do not hard-wire anonymous animations or flatten supported diagrams into screenshots.
 6. Run `pnpm cli -- validate path/to/deck.html` before visual operation. For editable PPTX, also run `pnpm cli -- pptx html-check --input path/to/deck.html --output pptx-html-readiness.json`; add `--strict` for native-oriented slide plans.
 7. Return to `workflows/studio.md`. Launch the exact source with `pnpm studio:open`, open the printed URL, use Studio to review and edit, and Save explicitly.
-8. After the Studio reload check, build author and share HTML and run only the requested quality/export workflows.
+8. After the Studio reload check, follow `workflows/present.md` when the user needs rehearsal, presenter/audience windows, speaker notes, projector guidance, or Presentation-only fallback. Then build author and share HTML and run only the requested quality/export workflows.
 </process>
 
 <prohibition>

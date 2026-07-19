@@ -30,6 +30,10 @@ The upstream style prompt library (32 `styles/*.md` + 32 `styles/*.layouts.json`
 
 Licensed under the MIT License. Frontend Slides Studio independently implements the selected behavior and records any direct source adaptation in [`provenance.json`](provenance.json).
 
+## Reveal.js
+
+Copyright (C) 2011-2026 Hakim El Hattab and reveal.js contributors. Licensed under the MIT License. Commit `a3b940695648aa1c5b0680bc9a5b905cf43020e5` was studied for speaker-view behavior. No reveal.js source is copied into Frontend Slides Studio; the session protocol, security model, presenter UI, and fallback are original implementations.
+
 ## Dashi PPT
 
 No code or assets are included. Dashi PPT is listed only to make the clean-room boundary explicit.

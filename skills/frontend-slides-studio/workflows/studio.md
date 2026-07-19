@@ -29,10 +29,12 @@
    - Use Recipe → Style → Compatible layout before asset planning.
    - Insert typed diagrams through DiagramSpec JSON.
    - Use media framing, asset generation, motion, transitions, and quality controls only when the product map routes the request there.
+   - Write private per-page cues in **Speaker notes**. Notes persist in source HTML, appear in Presenter view, stay out of Audience/Presentation only, and map to editable PPTX notes.
+   - Use **Present with speaker view** for synchronized presenter/audience windows. Use **Presentation only** when popups, multiple displays, or synchronization are unavailable. Follow `workflows/present.md` for Win+P, fullscreen, and rehearsal.
    - Review **Editable PPTX readiness** before editable export. Resolve blockers and compare every hybrid warning with the approved slide plan.
 7. After every meaningful change, wait for the `UNSAVED` state before pressing **Save**. In a launch session, Save atomically updates only the configured source path. Do not send a client-selected path to the launch bridge.
 8. Reload the Studio URL or relaunch the saved path and verify the edited text, geometry, media, slide order, diagrams, motion metadata, transitions, and PPTX readiness state persist.
-9. Run **Run page audit** for the current page. For delivery, follow `workflows/export.md` for deck-wide validation, author/share builds, strict quality, and requested exports.
+9. Run **Run page audit** for the current page. Rehearse through `workflows/present.md` when presentation or speaker-note behavior is required. For delivery, follow `workflows/export.md` for deck-wide validation, author/share builds, strict quality, and requested exports.
 10. If PDF, raster PPTX, asset generation, or deck-wide quality is required, start the authenticated export service in a persistent terminal using `references/commands.md`; enter the same service URL and token in Studio.
 11. Keep Studio running when the user wants to continue editing. Otherwise run the printed stop command or:
    ```bash
@@ -50,6 +52,7 @@ Do not silently fall back to writing one HTML file. If Studio cannot launch, rep
 - The relevant Studio controls were used and the source was explicitly saved.
 - A reload proves persistence.
 - Requested validation and export gates pass.
-- Editable-PPTX requests have a reviewed readiness report and object-level fallback plan.
+- Presenter/Audience requests prove notes isolation, current/next previews, bidirectional navigation, timer/clock/progress, reconnect, reduced motion, and Presentation-only fallback.
+- Editable-PPTX requests have a reviewed readiness report, object-level fallback plan, and verified speaker notes when authored.
 </success_criteria>
 </workflow>

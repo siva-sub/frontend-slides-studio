@@ -27,7 +27,7 @@ For a blank welcome-only development session:
 ```bash
 pnpm dev:studio
 ```
-Do not use `pnpm dev:studio` when the agent must open a specific deck automatically; use `studio:open`.
+Do not use `pnpm dev:studio` when the agent must open a specific deck automatically; use `studio:open`. Presenter/Audience launch is a Studio control because it creates role-scoped capabilities from this authenticated source session. Use Presentation only when no authenticated session is available.
 </studio>
 
 <planning_and_source>
@@ -101,6 +101,7 @@ Read `../workflows/pptx-html.md` and `pptx-native.md` before authoring any edita
 ```bash
 pnpm check
 pnpm smoke:studio
+pnpm smoke:presenter
 pnpm smoke
 pnpm check:pptx-external-compat
 ```
