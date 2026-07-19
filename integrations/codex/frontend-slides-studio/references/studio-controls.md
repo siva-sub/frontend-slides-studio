@@ -37,6 +37,7 @@ The authenticated launch URL loads the configured deck automatically. The editor
 - **Object motion:** choose reveal, fade, slide, scale, draw, focus, loop, blur, wipe, rotate, pulse, or stagger; set duration, delay, and replay; apply or remove.
 - **Page transition:** choose none, crossfade, slide, zoom, circle reveal, clip wipe, pixel grid/bars, or vertical/horizontal slices; set duration, target entrance fraction, and reduced-motion policy.
 - **Native PowerPoint shape:** choose any externally validated preset and insert it with stable `data-pptx-shape` metadata. The browser preview uses CSS; editable PPTX uses native OOXML geometry. Read `pptx-native.md` for advanced attributes.
+- **Editable PPTX readiness:** set the current page to native-oriented, hybrid, raster, or unspecified. Studio then analyzes stable identity, explicit native candidates, runtime-dependent objects, clean plates, untracked text, fallback risks, and invalid metadata. Blockers disable editable export. Hybrid warnings remain reviewable because intentional fallback is supported.
 - **Rendered audit:** runs a current-page non-strict browser audit and lets the operator focus an issue on canvas.
 - **Evidence-gated export:** requires a saved absolute source path, the loopback service, token, format, and quality gate. Export is disabled while the deck is dirty.
 </inspector>
@@ -48,6 +49,7 @@ The authenticated launch URL loads the configured deck automatically. The editor
 4. Apply one logical change at a time and inspect the canvas.
 5. Wait for `UNSAVED`, then Save.
 6. Reload and confirm persistence.
-7. Run page audit, then deck-wide quality/export when requested.
+7. For editable PPTX, compare the readiness panel with the per-slide native/hybrid/raster plan and resolve every blocker.
+8. Run page audit, then deck-wide quality/export when requested.
 </operator_sequence>
 </studio_controls>

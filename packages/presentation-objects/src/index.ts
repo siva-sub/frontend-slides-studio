@@ -1,3 +1,5 @@
+export * from "./html-readiness.js";
+
 import { layoutDiagram } from "@slides-studio/diagram-kit";
 import { assertNativePptxTransition, resolveNativeShapePreset, type NativePptxTransition, type NativeTransitionMapping, type ShapePresetInput } from "@slides-studio/pptx-compat/browser";
 import type { DiagramSpecAny } from "@slides-studio/protocol";
@@ -111,6 +113,8 @@ export function parsePresentationObjectGraph(input: unknown): PresentationObject
       finite(object.x, `${label}.x`); finite(object.y, `${label}.y`); finite(object.width, `${label}.width`, true); finite(object.height, `${label}.height`, true); finite(object.zIndex, `${label}.zIndex`);
       if (typeof object.native !== "boolean") graphError(`${label}.native must be boolean`); if (!object.native) identifier(object.fallbackReason, `${label}.fallbackReason`);
       if (!(["text", "shape", "connector", "table", "chart", "image", "svg", "raster-region"] as string[]).includes(object.type)) graphError(`${label}.type is unsupported`);
+      if (object.native && (object.type === "svg" || object.type === "raster-region")) graphError(`${label}.${object.type} cannot be reported as native`);
+      if (!object.native && !(["image", "svg", "raster-region"] as string[]).includes(object.type)) graphError(`${label}.type ${object.type} cannot be reported as a raster fallback`);
       if (object.type === "text") identifier(object.text, `${label}.text`);
       if (object.type === "shape") {
         if (!resolveNativeShapePreset(object.shape)) graphError(`${label}.shape is unsupported or has no schema-valid compatibility mapping`);
@@ -151,13 +155,13 @@ export const presentationObjectGraphSchema = { parse: parsePresentationObjectGra
 export type NativeShapeMetadata = Pick<ShapeObject, "shape" | "fill" | "fillTransparency" | "gradient" | "stroke" | "lineWidth" | "lineTransparency" | "lineDash" | "beginArrow" | "endArrow" | "radius" | "rotation" | "flipH" | "flipV" | "text" | "fontFace" | "fontSize" | "textColor" | "bold" | "align" | "hyperlink">;
 export type NativeTableMetadata = Pick<TableObject, "rows" | "columnWidths" | "rowHeights" | "fontFace" | "fontSize" | "borderColor" | "borderWidth">;
 export type NativeChartMetadata = Pick<ChartObject, "chartType" | "series" | "title" | "showLegend" | "showValue" | "showCategoryName" | "colors">;
-export interface DomSnapshotElement { id: string; tagName: string; text?: string; bbox: { x: number; y: number; width: number; height: number }; style: Record<string, string | number | undefined>; imagePath?: string; media?: ImagePlacementMetadata; nativeShape?: NativeShapeMetadata; nativeTable?: NativeTableMetadata; nativeChart?: NativeChartMetadata; supported: boolean; fallbackPath?: string; zIndex?: number; }
+export interface DomSnapshotElement { id: string; tagName: string; text?: string; bbox: { x: number; y: number; width: number; height: number }; style: Record<string, string | number | undefined>; imagePath?: string; media?: ImagePlacementMetadata; nativeShape?: NativeShapeMetadata; nativeTable?: NativeTableMetadata; nativeChart?: NativeChartMetadata; supported: boolean; fallbackPath?: string; fallbackReason?: string; zIndex?: number; }
 
 export function domSnapshotToSlide(slideId: string, elements: DomSnapshotElement[], width = 1920, height = 1080): PresentationSlide {
   const objects: PresentationObject[] = [];
   elements.forEach((element, index) => {
     const base = { id: element.id, sourceId: element.id, sourceKind: "dom" as const, ...element.bbox, zIndex: element.zIndex ?? index, native: element.supported };
-    if (!element.supported) { if (element.fallbackPath) objects.push({ ...base, type: "raster-region", path: element.fallbackPath, native: false, fallbackReason: "unsupported DOM/CSS feature" }); return; }
+    if (!element.supported) { if (element.fallbackPath) objects.push({ ...base, type: "raster-region", path: element.fallbackPath, native: false, fallbackReason: element.fallbackReason ?? "unsupported DOM/CSS feature" }); return; }
     if (element.imagePath) objects.push({ ...base, type: "image", path: element.imagePath, fit: element.media?.fit ?? "contain", ...element.media });
     else if (element.nativeShape) objects.push({ ...base, type: "shape", ...element.nativeShape });
     else if (element.nativeTable) objects.push({ ...base, type: "table", ...element.nativeTable });

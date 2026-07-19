@@ -21,6 +21,7 @@ const errors: string[] = [];
 
 for (const required of [
   "workflows/studio.md",
+  "workflows/pptx-html.md",
   "references/product-map.md",
   "references/setup.md",
   "references/commands.md",
@@ -32,6 +33,9 @@ for (const required of [
 ]) if (!skill.includes(required)) errors.push(`SKILL.md is missing ${required}`);
 
 if (!/^compatibility:\s+.+/m.test(skill)) errors.push("SKILL.md lacks a compatibility declaration");
+const pptxWorkflow = contents.get(resolve(skillRoot, "workflows/pptx-html.md")) ?? "";
+for (const required of ["pptx html-check", "data-pptx-intent", "native-oriented", "hybrid", "actual native/fallback counts"]) if (!pptxWorkflow.includes(required)) errors.push(`pptx-html.md is missing ${required}`);
+
 const setup = contents.get(resolve(skillRoot, "references/setup.md")) ?? "";
 for (const required of [
   "pi install \"$(pwd)\"",

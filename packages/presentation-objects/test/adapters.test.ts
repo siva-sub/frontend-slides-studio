@@ -11,6 +11,8 @@ describe("presentation object adapters", () => {
     expect(parsePresentationObjectGraph(base).title).toBe("Graph");
     expect(() => parsePresentationObjectGraph({ ...base, slides: [{ ...base.slides[0], objects: [{ ...base.slides[0]!.objects[0], type: "mystery" }] }] })).toThrow(/type is unsupported/);
     expect(() => parsePresentationObjectGraph({ ...base, slides: [{ ...base.slides[0], objects: [{ ...base.slides[0]!.objects[0], native: false }] }] })).toThrow(/fallbackReason/);
+    expect(() => parsePresentationObjectGraph({ ...base, slides: [{ ...base.slides[0], objects: [{ ...base.slides[0]!.objects[0], native: false, fallbackReason: "pixels" }] }] })).toThrow(/cannot be reported as a raster fallback/);
+    expect(() => parsePresentationObjectGraph({ ...base, slides: [{ ...base.slides[0], objects: [{ ...base.slides[0]!.objects[0], type: "raster-region", path: "pixels.png" }] }] })).toThrow(/cannot be reported as native/);
     expect(() => parsePresentationObjectGraph({ ...base, slides: [{ ...base.slides[0], objects: [base.slides[0]!.objects[0], base.slides[0]!.objects[0]] }] })).toThrow(/duplicate object id/);
   });
 
@@ -68,9 +70,10 @@ describe("presentation object adapters", () => {
     }
   });
   it("records DOM fallbacks without duplicated text", () => {
-    const slide = domSnapshotToSlide("s", [{ id: "x", tagName: "canvas", bbox: { x: 0, y: 0, width: 100, height: 100 }, style: {}, supported: false, fallbackPath: "canvas.png" }]);
+    const slide = domSnapshotToSlide("s", [{ id: "x", tagName: "canvas", bbox: { x: 0, y: 0, width: 100, height: 100 }, style: {}, supported: false, fallbackPath: "canvas.png", fallbackReason: "visual clean plate" }]);
     expect(slide.objects).toHaveLength(1);
     expect(slide.objects[0]?.type).toBe("raster-region");
+    expect(slide.objects[0]?.fallbackReason).toBe("visual clean plate");
   });
   it("preserves editable media crop and focal metadata", () => {
     const slide = domSnapshotToSlide("media", [{ id: "hero", tagName: "IMG", bbox: { x: 10, y: 20, width: 400, height: 220 }, style: {}, imagePath: "hero.png", supported: true, media: { fit: "cover", crop: { x: 0.25, y: 0.1, width: 0.5, height: 0.8 }, focal: { x: 0.7, y: 0.4 }, pan: { x: 4, y: -2 }, zoom: 1.3, rotation: -5, alt: "Product hero", layoutSlot: "hero" } }]);

@@ -27,8 +27,10 @@
 - **Service unreachable:** start `pnpm dev:export` with `SLIDES_STUDIO_SOURCE_ROOT` and `SLIDES_STUDIO_EXPORT_TOKEN`; default URL is `http://127.0.0.1:4317`.
 - **401 from export service:** the Studio token and export-service token are different. Enter `SLIDES_STUDIO_EXPORT_TOKEN` in the asset/export token field.
 - **Source outside root or symlink escape:** restart the service with a source root containing the real source path. Do not weaken containment.
+- **Editable PPTX readiness is blocked:** open the readiness panel or run `pnpm cli -- pptx html-check --input <source>`. Repair duplicate/missing IDs, invalid metadata, unsafe links, or unsupported media paths before export.
+- **Strict readiness fails with hybrid warnings:** compare untracked text, nested stable objects, remote media, transition downgrades, and regional fallbacks with the per-slide plan. Keep intentional hybrid fallback only in default preflight mode.
 - **Strict quality failure:** open the report and screenshots, focus each blocking issue, repair in Studio, save, and resubmit.
-- **Editable PPTX remains pending:** inspect the fresh LibreOffice/PowerPoint/Keynote render-back and record a named review; do not relabel it implicitly.
+- **Editable PPTX remains pending:** inspect the actual inventory and fresh LibreOffice/PowerPoint/Keynote render-back, perform a representative edit-save-reopen check, and record a named review; do not relabel it implicitly.
 </export>
 
 <optional_dependencies>

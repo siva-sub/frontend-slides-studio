@@ -12,6 +12,7 @@
 2. Establish the source:
    - New presentation → follow `workflows/create.md` through plan, style/recipe/layout selection, and starter source creation.
    - Existing HTML → inspect it, then follow `workflows/import-edit.md`.
+   - Any editable-PPTX output → also follow `workflows/pptx-html.md` before authoring or conversion.
    - Continuous prose without discrete slides → stop and ask before promoting sections into pages.
 3. Convert the source path to an absolute real path. Launch the exact deck:
    ```bash
@@ -28,8 +29,9 @@
    - Use Recipe → Style → Compatible layout before asset planning.
    - Insert typed diagrams through DiagramSpec JSON.
    - Use media framing, asset generation, motion, transitions, and quality controls only when the product map routes the request there.
+   - Review **Editable PPTX readiness** before editable export. Resolve blockers and compare every hybrid warning with the approved slide plan.
 7. After every meaningful change, wait for the `UNSAVED` state before pressing **Save**. In a launch session, Save atomically updates only the configured source path. Do not send a client-selected path to the launch bridge.
-8. Reload the Studio URL or relaunch the saved path and verify the edited text, geometry, media, slide order, diagrams, motion metadata, and transitions persist.
+8. Reload the Studio URL or relaunch the saved path and verify the edited text, geometry, media, slide order, diagrams, motion metadata, transitions, and PPTX readiness state persist.
 9. Run **Run page audit** for the current page. For delivery, follow `workflows/export.md` for deck-wide validation, author/share builds, strict quality, and requested exports.
 10. If PDF, raster PPTX, asset generation, or deck-wide quality is required, start the authenticated export service in a persistent terminal using `references/commands.md`; enter the same service URL and token in Studio.
 11. Keep Studio running when the user wants to continue editing. Otherwise run the printed stop command or:
@@ -48,5 +50,6 @@ Do not silently fall back to writing one HTML file. If Studio cannot launch, rep
 - The relevant Studio controls were used and the source was explicitly saved.
 - A reload proves persistence.
 - Requested validation and export gates pass.
+- Editable-PPTX requests have a reviewed readiness report and object-level fallback plan.
 </success_criteria>
 </workflow>

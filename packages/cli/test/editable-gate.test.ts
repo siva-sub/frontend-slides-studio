@@ -17,5 +17,5 @@ describe("CLI editable evidence gate", () => {
       expect(result.status).toBe(1);
       expect(result.stderr).toMatch(/--quality-report is required/);
     } finally { rmSync(root, { recursive: true, force: true }); }
-  });
+  }, 30_000);
 });

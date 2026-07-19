@@ -69,6 +69,9 @@ importers:
       '@slides-studio/pptx-compat':
         specifier: workspace:*
         version: link:../../packages/pptx-compat
+      '@slides-studio/presentation-objects':
+        specifier: workspace:*
+        version: link:../../packages/presentation-objects
       '@slides-studio/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -127,6 +130,9 @@ importers:
       '@slides-studio/pptx-compat':
         specifier: workspace:*
         version: link:../pptx-compat
+      '@slides-studio/presentation-objects':
+        specifier: workspace:*
+        version: link:../presentation-objects
       '@slides-studio/protocol':
         specifier: workspace:*
         version: link:../protocol
@@ -263,6 +269,9 @@ importers:
         specifier: workspace:*
         version: link:../protocol
     devDependencies:
+      linkedom:
+        specifier: ^0.18.9
+        version: 0.18.13
       typescript:
         specifier: ^5.8.3
         version: 5.9.3

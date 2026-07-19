@@ -5,18 +5,19 @@
 </required_reading>
 
 <process>
-1. Inspect the source for discrete slide structures, intrinsic stage dimensions, scripts, motion, media, and unsafe URLs. Preserve continuous prose as document mode unless the user confirms page promotion.
+1. Inspect the source for discrete slide structures, intrinsic stage dimensions, scripts, motion, media, and unsafe URLs. Preserve continuous prose as document mode unless the user confirms page promotion. If editable PPTX is requested, read `workflows/pptx-html.md` and inventory native candidates, runtime-dependent objects, untracked text, and approved fallback regions before mutation.
 2. When normalization is needed, run:
    ```bash
    pnpm cli -- import --input existing.html --output normalized.html
    pnpm cli -- validate normalized.html
    ```
+   For editable PPTX, run `pnpm cli -- pptx html-check --input normalized.html --output pptx-html-readiness.json`. Do not assume normalization makes generic CSS natively editable.
 3. Launch the chosen exact source with `pnpm studio:open -- --input "$(realpath <source>)"`. Use the printed authenticated URL; do not substitute `file://`, a generic static server, or the welcome-only development URL.
 4. In **Browse**, verify original navigation, scripts, animations, page count, and the reported normalization strategy/confidence before editing.
 5. Use **Edit** for copy and properties and **Move** for geometry. Geometry uses individual CSS `translate`, `scale`, and `rotate` so existing animated `transform` remains intact.
 6. Before detaching flow content, measure every box, preserve flow footprints, and detach relative to the final containing block.
 7. Commit commands at gesture end. Use page, media, motion, transition, diagram, audit, and export controls described in `references/studio-controls.md` as required.
-8. Wait for `UNSAVED`, press **Save**, reload the authenticated URL, and verify IDs, content, geometry, media, navigation, slide operations, and animation behavior.
+8. Wait for `UNSAVED`, press **Save**, reload the authenticated URL, and verify IDs, content, geometry, media, navigation, slide operations, and animation behavior. Recheck the **Editable PPTX readiness** panel and rerun strict HTML preflight when the slide plan is native-oriented.
 9. Return to `workflows/studio.md`, then run `workflows/export.md` when delivery formats are requested.
 </process>
 
@@ -24,5 +25,6 @@
 - The imported source retains its measured stage and behavior.
 - Studio edits persist to the intended source after reload.
 - No continuous document was silently converted into guessed slides.
+- Editable-PPTX imports have no blocking readiness issue or unplanned rasterized text.
 </success_criteria>
 </workflow>

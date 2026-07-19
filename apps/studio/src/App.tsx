@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { stageBrowserMedia, type BrowserDirectoryHandle } from "@slides-studio/media-kit";
 import { NATIVE_SHAPE_PRESETS } from "@slides-studio/pptx-compat/browser";
+import { analyzePptxHtmlReadiness } from "@slides-studio/presentation-objects";
 import { parseStudioMessage, type MotionProgramV1, type QualityReport, type StudioMessage, type TransitionSpecV1 } from "@slides-studio/protocol";
 import { inspectRecipe, inspectStyle, listRecipes, listStyles } from "@slides-studio/style-registry";
 import { injectStudioBridge } from "./lib/bridge";
@@ -24,6 +25,7 @@ import {
 import { normalizeDeck } from "./lib/normalizeDeck";
 import { applyObjectMotion, applySlideTransition, createMotionTrack, readMotionProgram, readSlideTransition, removeObjectMotion, type MotionPreset } from "./lib/motion";
 import { insertNativePptxShape } from "./lib/nativeShape";
+import { applySlidePptxIntent, readSlidePptxIntent } from "./lib/pptxReadiness";
 import { changeObjectLayer, type LayerAction } from "./lib/objectOperations";
 import { revisionFor, saveSnapshot } from "./lib/storage";
 import { applyLayoutSlotToObject, applyStyleToHtml, attachLayoutToPage, type StyleApplyScope } from "./lib/style";
@@ -296,6 +298,7 @@ export function App() {
       : "Editable PPTX maps supported stable-ID text, shapes, and images to native objects, records raster fallbacks, requires strict quality, and remains pending manual review after render-back.";
   const runExport = async () => {
     if (store.dirty) { setExportStatus("Save the current deck before exporting so the service reads the same revision."); return; }
+    if (exportFormat === "editable-pptx" && !pptxReadiness.ready) { setExportStatus("Resolve blocking Editable PPTX readiness issues before export."); return; }
     setExportBusy(true); setExportJob(null);
     try {
       sessionStorage.setItem("slides-studio-asset-token", assetToken.trim());
@@ -342,6 +345,9 @@ export function App() {
   const selectedText = useMemo(() => { if (!store.selectedObjectId) return ""; const doc = new DOMParser().parseFromString(store.sourceHtml, "text/html"); return doc.querySelector(`[data-object-id="${CSS.escape(store.selectedObjectId)}"]`)?.textContent ?? ""; }, [store.sourceHtml, store.selectedObjectId]);
   const selectedMediaFrame = useMemo(() => store.selectedObjectId ? readMediaReframe(store.sourceHtml, store.selectedObjectId) : null, [store.sourceHtml, store.selectedObjectId]);
   const selectedMediaCrop = selectedMediaFrame?.crop ?? { x: 0, y: 0, width: 1, height: 1 };
+  const pptxReadiness = useMemo(() => analyzePptxHtmlReadiness(new DOMParser().parseFromString(store.sourceHtml, "text/html")), [store.sourceHtml]);
+  const currentPptxIntent = useMemo(() => readSlidePptxIntent(store.sourceHtml, store.currentSlide), [store.sourceHtml, store.currentSlide]);
+  const editableExportBlocked = exportFormat === "editable-pptx" && !pptxReadiness.ready;
   const slideSummaries = useMemo(() => buildSlideThumbnails(resolvePreviewMediaSources(stylePreview ? styledFrameSource : store.sourceHtml, previewAssetUrls.current)).filter((slide) => !store.search.trim() || slide.label.toLowerCase().includes(store.search.trim().toLowerCase())), [store.sourceHtml, store.search, stylePreview, styledFrameSource, previewAssetRevision]);
 
   return <main className="studio-shell">
@@ -474,6 +480,14 @@ export function App() {
           <ul>{qualityReport.issues.slice(0, 8).map((issue, index) => <li key={`${issue.category}-${issue.objectId ?? index}`}><button onClick={() => focusQualityIssue(issue)}><b>{issue.category}</b><span>{issue.objectId ? `${issue.objectId} · ` : ""}{issue.reason}</span></button></li>)}</ul>
         </> : <p>Checks rendered bounds, text, media, overlaps, connectors, assets, IDs, and clone safety inside the sandbox.</p>}
       </div>
+      <div className="inspector-section pptx-readiness-panel">
+        <label htmlFor="pptx-slide-intent">Editable PPTX readiness</label>
+        <select id="pptx-slide-intent" value={currentPptxIntent} onChange={(event) => { const intent = event.target.value as "" | "native-oriented" | "hybrid" | "raster"; void commitDeckOperation(applySlidePptxIntent(store.sourceHtml, store.currentSlide, intent), `PPTX intent ${intent || "unspecified"}`); }}><option value="">Intent not set</option><option value="native-oriented">Native-oriented</option><option value="hybrid">Hybrid</option><option value="raster">Raster</option></select>
+        <div className={`quality-status ${pptxReadiness.status === "native-oriented" ? "passed" : "failed"}`}><strong>{pptxReadiness.status.toUpperCase()}</strong><span>{pptxReadiness.nativeCandidates} native candidates · {pptxReadiness.runtimeDependent} runtime checks · {pptxReadiness.regionalFallbacks + pptxReadiness.fullSlideFallbacks} fallback risks</span></div>
+        <dl><div><dt>Stable objects</dt><dd>{pptxReadiness.stableObjects}</dd></div><div><dt>Clean plates</dt><dd>{pptxReadiness.cleanPlateFallbacks}</dd></div></dl>
+        <ul>{pptxReadiness.issues.filter((entry) => entry.severity !== "info").slice(0, 6).map((entry, index) => <li key={`${entry.code}-${entry.objectId ?? entry.slideId ?? index}`}><span><b>{entry.code}</b>{entry.objectId ? ` · ${entry.objectId}` : entry.slideId ? ` · ${entry.slideId}` : ""}<br />{entry.reason}</span></li>)}</ul>
+        <p>Preflight predicts HTML capture only. The exported PPTX still requires strict quality, ISO/IEC 29500 validation, render-back, inventory review, and named visual review.</p>
+      </div>
       <div className="inspector-section export-panel">
         <label htmlFor="export-source-path">Evidence-gated export</label>
         <input id="export-source-path" value={exportSourcePath} onChange={(event) => setExportSourcePath(event.target.value)} placeholder="/absolute/path/to/saved-deck.html" />
@@ -481,7 +495,7 @@ export function App() {
         <label htmlFor="export-token">Session token</label><input id="export-token" type="password" value={assetToken} onChange={(event) => setAssetToken(event.target.value)} autoComplete="off" />
         <div className="two-col"><div><label htmlFor="export-format">Output intent</label><select id="export-format" value={exportFormat} onChange={(event) => { const format = event.target.value as ExportFormat; setExportFormat(format); if (format === "editable-pptx") setExportQualityGate("strict"); }}><option value="pdf">PDF — text-preserving static pages</option><option value="pptx">PPTX — raster, non-editable</option><option value="editable-pptx">Editable PPTX — native objects + fallbacks</option></select></div><div><label htmlFor="export-quality-gate">Quality gate</label><select id="export-quality-gate" value={exportQualityGate} disabled={exportFormat === "editable-pptx"} onChange={(event) => setExportQualityGate(event.target.value as ExportQualityGate)}><option value="strict">Strict</option><option value="report">Report</option><option value="off">Off</option></select></div></div>
         <p className="export-intent">{exportExplanation}</p>
-        <button className="control-button export-button" disabled={exportBusy || !exportSourcePath.trim() || !assetToken.trim() || store.dirty} onClick={() => { void runExport(); }}>{exportBusy ? "Exporting…" : store.dirty ? "Save before export" : "Run export"}</button>
+        <button className="control-button export-button" disabled={exportBusy || !exportSourcePath.trim() || !assetToken.trim() || store.dirty || editableExportBlocked} onClick={() => { void runExport(); }}>{exportBusy ? "Exporting…" : store.dirty ? "Save before export" : editableExportBlocked ? "Resolve PPTX blockers" : "Run export"}</button>
         <p className="export-status" aria-live="polite">{exportStatus}</p>
         {exportJob && <dl><div><dt>Status</dt><dd>{exportJob.status} · {Math.round(exportJob.progress * 100)}%</dd></div>{exportJob.output && <div><dt>Output</dt><dd>{exportJob.output}</dd></div>}{exportJob.exportReport && <div><dt>Report</dt><dd>{exportJob.editableStatus ? `${exportJob.editableStatus} · ` : ""}{exportJob.exportReport}</dd></div>}{exportJob.qualityReport && <div><dt>Quality</dt><dd>{exportJob.qualityPassed === false ? "review" : "pass"} · {exportJob.qualityReport}</dd></div>}{exportJob.error && <div><dt>Error</dt><dd>{exportJob.error}</dd></div>}</dl>}
       </div>

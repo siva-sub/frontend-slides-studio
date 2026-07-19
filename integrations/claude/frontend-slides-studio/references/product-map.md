@@ -17,14 +17,15 @@ Use this map before choosing a workflow. Frontend Slides Studio is a coordinated
 | Find visual defects | Quality package | Current-page Studio audit plus persisted deck-wide rendered reports | `workflows/export.md` |
 | Deliver browser slides | Export package and runtime | Build author HTML and clean self-contained share HTML | `workflows/export.md` |
 | Deliver PDF or raster PPTX | Authenticated export service | Settle motion/media, normalize stage, run quality gate, capture | `workflows/export.md` |
-| Deliver editable PPTX | Presentation object graph | Native/fallback inventory, render-back, named manual review | `workflows/export.md` |
+| Author HTML for editable PPTX | PPTX HTML readiness and presentation object graph | Per-slide intent, stable object mapping, conservative native/fallback preflight | `workflows/pptx-html.md` |
+| Deliver editable PPTX | Presentation object graph and package validator | Actual inventory, ISO/IEC 29500 validation, render-back, edit-save-reopen, named review | `workflows/export.md` |
 
 <workflow_chaining>
 A complete new-deck request normally chains:
-`studio.md` → `create.md` → optional `diagram.md` / `assets.md` / `motion.md` / `visual-master.md` → `studio.md` save and audit → `export.md`.
+`studio.md` → `create.md` → optional `pptx-html.md` / `diagram.md` / `assets.md` / `motion.md` / `visual-master.md` → `studio.md` save and audit → `export.md`.
 
 A complete edit request normally chains:
-`studio.md` → `import-edit.md` → optional subsystem workflows → `studio.md` save and reload → `export.md` when delivery is requested.
+`studio.md` → `import-edit.md` → optional `pptx-html.md` and other subsystem workflows → `studio.md` save and reload → `export.md` when delivery is requested.
 </workflow_chaining>
 
 <source_of_truth>
@@ -32,6 +33,6 @@ A complete edit request normally chains:
 - The CLI is the deterministic contract and batch interface.
 - HTML remains the source for HTML-native slides.
 - DiagramSpec, MotionProgram, TransitionSpec, MediaPlacement, and presentation objects remain versioned metadata rather than anonymous DOM guesses.
-- Export reports are the source of truth for editability and review status.
+- PPTX HTML readiness is a conservative preflight; the export report is the source of truth for actual native/fallback inventory and review status.
 </source_of_truth>
 </product_map>

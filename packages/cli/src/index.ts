@@ -9,6 +9,7 @@ import { renderDiagramSvg, validateDiagram } from "@slides-studio/diagram-kit";
 import { approveEditablePptx, buildAuthorHtml, buildShareHtml, exportEditablePptx } from "@slides-studio/export";
 import { inspectLayout as inspectLegacyLayout, normalizeLayout as normalizeLegacyLayout, queryLayouts as queryLegacyLayouts, type LayoutQuery as LegacyLayoutQuery } from "@slides-studio/layout-contracts";
 import { NATIVE_PPTX_TRANSITION_KINDS, NATIVE_SHAPE_PRESETS, PPT_RS_SHAPE_COMPATIBILITY, resolveNativeShapePreset, validatePptxPackage } from "@slides-studio/pptx-compat";
+import { analyzePptxHtmlReadiness } from "@slides-studio/presentation-objects";
 import { deckGoalSchema, motionAnalysisSchema, motionIntentSchema, motionProgramSchema, parseDiagramSpec, type MotionProgramV1, type ProviderCapability, type ProviderQuality } from "@slides-studio/protocol";
 import { inspectLayout as inspectRegistryLayout, inspectRecipe, inspectStyle, listRecipes, listStyles, normalizeLayoutProps, queryLayouts as queryRegistryLayouts, scaffoldRecipe, type LayoutQuery as RegistryLayoutQuery } from "@slides-studio/style-registry";
 import { applyTransitionToDeck, createAssetPlan, motionEffectFrames, reframeMediaPlacement, submitAssetPlan, waitForAssetJob } from "./workflows.js";
@@ -210,6 +211,11 @@ async function pptxCommand(): Promise<void> {
   if (sub === "editable") { const graph = await jsonFile(required("--graph")) as Parameters<typeof exportEditablePptx>[0]; const qualityReport = flag("--quality-report"); if (!qualityReport && !args.includes("--unverified")) throw new Error("--quality-report is required for editable export; use --unverified only for an explicitly non-approvable compatibility build"); const report = await exportEditablePptx(graph, resolve(required("--output")), { ...(qualityReport ? { qualityReport: resolve(qualityReport) } : {}) }); console.log(JSON.stringify(report, null, 2)); }
   else if (sub === "review") { const report = await approveEditablePptx(resolve(required("--report")), { reviewer: required("--reviewer"), evidence: required("--evidence") }); console.log(JSON.stringify(report, null, 2)); }
   else if (sub === "validate") { const report = await validatePptxPackage(resolve(required("--input"))); console.log(JSON.stringify(report, null, 2)); if (!report.valid) process.exitCode = 1; }
+  else if (sub === "html-check") {
+    const input = resolve(required("--input")); const source = await readFile(input, "utf8"); const { document } = parseHTML(source);
+    const report = analyzePptxHtmlReadiness(document); await writeJsonResult(report, flag("--output"));
+    if (!report.ready || (args.includes("--strict") && !report.strictReady)) process.exitCode = 1;
+  }
   else if (sub === "shapes") {
     const action = args.shift() ?? "list";
     if (action === "list") console.log(JSON.stringify({ count: NATIVE_SHAPE_PRESETS.length, presets: NATIVE_SHAPE_PRESETS, pptRsCompatibility: PPT_RS_SHAPE_COMPATIBILITY }, null, 2));
@@ -217,7 +223,7 @@ async function pptxCommand(): Promise<void> {
     else throw new Error("pptx shapes requires list or resolve");
   }
   else if (sub === "transitions") console.log(JSON.stringify({ count: NATIVE_PPTX_TRANSITION_KINDS.length, transitions: NATIVE_PPTX_TRANSITION_KINDS }, null, 2));
-  else throw new Error("pptx requires editable, review, validate, shapes, or transitions");
+  else throw new Error("pptx requires editable, review, validate, html-check, shapes, or transitions");
 }
 
 interface ExportJob { id: string; status: string; error?: string; qualityReport?: string; qualityPassed?: boolean; output?: string; exportReport?: string; editableStatus?: string; }
@@ -268,5 +274,5 @@ try {
   else if (command === "build") await buildCommand();
   else if (command === "export") await exportCommand();
   else if (command === "pptx") await pptxCommand();
-  else { console.log("slides-studio doctor | new [deck.html] | import --input deck.html --output normalized.html | styles list|inspect | recipes list|inspect|scaffold | layouts query|inspect|normalize | diagram render|validate|export | visual generate|edit|reconstruct | asset plan|generate | media reframe | motion analyze|apply | transition apply | quality | validate | build | export --format pdf|pptx|editable-pptx | pptx editable|review|validate|shapes|transitions"); if (command) process.exitCode = 1; }
+  else { console.log("slides-studio doctor | new [deck.html] | import --input deck.html --output normalized.html | styles list|inspect | recipes list|inspect|scaffold | layouts query|inspect|normalize | diagram render|validate|export | visual generate|edit|reconstruct | asset plan|generate | media reframe | motion analyze|apply | transition apply | quality | validate | build | export --format pdf|pptx|editable-pptx | pptx editable|review|validate|html-check|shapes|transitions"); if (command) process.exitCode = 1; }
 } catch (error) { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; }

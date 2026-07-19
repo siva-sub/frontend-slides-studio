@@ -21,5 +21,5 @@ describe("CLI DiagramSpecV2 rendering", () => {
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 });

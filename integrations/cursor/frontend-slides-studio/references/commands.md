@@ -79,8 +79,10 @@ Use `--format pptx` for raster PPTX. Use `--format editable-pptx --quality-gate 
 </export_service>
 
 <editable_pptx>
-Discover native shapes and transitions, resolve ppt-rs aliases, and validate one package:
+Preflight one HTML source, discover native shapes and transitions, resolve ppt-rs aliases, and validate the actual package:
 ```bash
+pnpm cli -- pptx html-check --input deck.html --output pptx-html-readiness.json
+pnpm cli -- pptx html-check --input deck.html --strict
 pnpm cli -- pptx shapes list
 pnpm cli -- pptx shapes resolve --name flowChartOffPageConnector
 pnpm cli -- pptx transitions
@@ -92,7 +94,7 @@ The graph command is the advanced path for callers that already have a presentat
 pnpm cli -- pptx editable --graph presentation-graph.json --quality-report quality-report.json --output deck.pptx
 pnpm cli -- pptx review --report deck.pptx.report.json --reviewer "Reviewer Name" --evidence "Reviewed fresh render-back."
 ```
-Read `pptx-native.md` before authoring `data-pptx-shape` HTML or native transition fields.
+Read `../workflows/pptx-html.md` and `pptx-native.md` before authoring any editable-PPTX HTML. Default HTML preflight fails blockers; `--strict` also fails warnings. The report predicts capture behavior and never replaces validation of the exported PPTX.
 </editable_pptx>
 
 <verification>

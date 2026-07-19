@@ -7,6 +7,7 @@ Frontend Slides Studio can preserve selected HTML objects as editable PowerPoint
 Run commands from the repository root:
 
 ```bash
+pnpm cli -- pptx html-check --input /absolute/path/deck.html --output pptx-html-readiness.json
 pnpm cli -- pptx shapes list
 pnpm cli -- pptx shapes resolve --name flowChartOffPageConnector
 pnpm cli -- pptx transitions
@@ -16,6 +17,18 @@ pnpm cli -- pptx validate --input /absolute/path/deck.pptx
 The shape catalog contains 178 presets that pass the Microsoft Open XML SDK, direct `ppt-rs` validation, repair checks, python-pptx inspection, and LibreOffice render-back in the native-shape gallery gate.
 
 The native transition catalog is `none`, `cut`, `fade`, `push`, `wipe`, `split`, `reveal`, `cover`, and `zoom`. `reveal` uses the Office 2010 `p14:reveal` namespace. Transition duration uses the Office 2010 `p14:dur` attribute; `advTm` is reserved for explicitly authored automatic slide advance and is never inferred from animation duration. The `p:reveal` emitted by pinned `ppt-rs` fails Microsoft Open XML SDK schema validation and must not be copied.
+
+## Understand HTML Readiness
+
+Read `../workflows/pptx-html.md` for every editable-PPTX request. Each slide must declare `data-pptx-intent="native-oriented"`, `"hybrid"`, or `"raster"`; Studio exposes the same choice in its readiness panel. The HTML readiness report is conservative:
+
+- explicit valid shapes, tables, charts, local pictures, and DiagramSpec hosts are native candidates;
+- generic text or filled elements remain runtime-dependent until browser capture sees computed style and positive bounds;
+- video, canvas, iframe, generic SVG, remote/blob media, and unsupported stable elements require regional fallback;
+- untagged content is preserved only in the per-slide clean plate and is not independently editable;
+- invalid IDs or native metadata block editable export.
+
+A readiness report predicts capture behavior. The actual export report determines native and fallback counts. ISO/IEC 29500 validation applies to the exported PPTX package, not the HTML source.
 
 ## Declare a Native Shape in HTML
 
@@ -130,10 +143,12 @@ Fourteen names in pinned `ppt-rs` are invalid OOXML preset values. Studio correc
 
 HTML object motion is settled to a static final frame. Supported page transitions map to native PowerPoint transitions. Pixel-grid, pixel-bars, and circle-reveal have no exact base OOXML equivalent and downgrade to fade with report evidence.
 
+Use the smallest fallback region that preserves an unsupported effect. Keep titles, factual copy, numbers, tables, charts, diagrams, logos, and evidence inside stable native-oriented object boundaries. Do not duplicate text between reconstructed objects and clean-plate or regional pixels.
+
 Run the complete gate before delivery:
 
 ```bash
 pnpm check:pptx-external-compat
 ```
 
-This gate validates ten raster/editable artifacts, including crop/connector, all-transition, all-native-shape, and native table/chart coverage. Editable output still requires strict rendered quality, fresh render-back, and named visual review before status can become `passed`.
+This gate validates ten raster/editable fixtures, including crop/connector, all-transition, all-native-shape, and native table/chart coverage. It does not validate a user's delivered file. Run `pnpm cli -- pptx validate --input <actual-output.pptx>`, review the actual object inventory, render back, perform a representative edit-save-reopen check, and record named visual review before status can become `passed`.

@@ -45,6 +45,10 @@ try {
   assert(await page.locator("#style-profile option").count() === 32, "Studio style registry is incomplete");
   assert(await page.locator("#recipe-profile option").count() === 6, "Studio recipe registry is incomplete");
   assert(await page.locator("#export-format option").count() === 3, "Studio does not expose all export intents");
+  await page.getByText("Editable PPTX readiness", { exact: true }).waitFor();
+  assert(await page.locator("#pptx-slide-intent option").count() === 4, "Studio does not expose per-slide PPTX intent");
+  assert((await page.locator(".pptx-readiness-panel .quality-status").textContent())?.includes("NATIVE-ORIENTED"), "Studio did not compute PPTX HTML readiness");
+  assert((await page.locator(".pptx-readiness-panel").textContent())?.includes("2 native candidates") || (await page.locator(".pptx-readiness-panel").textContent())?.includes("native candidates"), "Studio readiness panel omitted native/fallback counts");
   await page.locator("#export-format").selectOption("editable-pptx");
   assert(await page.locator("#export-quality-gate").inputValue() === "strict" && await page.locator("#export-quality-gate").isDisabled(), "Editable PPTX did not lock strict quality");
   await page.locator("#export-format").selectOption("pdf");
@@ -69,8 +73,8 @@ try {
   frame = studioFrame();
   assert(frame, "Studio preview iframe was not created"); await assertPreviewBounds(page, frame);
   await page.getByRole("button", { name: "Run page audit" }).click();
-  await page.locator(".quality-status.passed").waitFor({ timeout: 10_000 });
-  assert((await page.locator(".quality-status").textContent())?.includes("PASS"), "Studio rendered audit did not pass the clean page");
+  await page.locator(".quality-panel .quality-status.passed").waitFor({ timeout: 10_000 });
+  assert((await page.locator(".quality-panel .quality-status").textContent())?.includes("PASS"), "Studio rendered audit did not pass the clean page");
   await page.locator("#native-shape-preset").selectOption("flowChartDecision");
   await page.getByRole("button", { name: "Insert native shape" }).click();
   frame = studioFrame(); assert(frame, "Preview disappeared after native shape insertion");

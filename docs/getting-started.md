@@ -249,7 +249,16 @@ Both PPTX modes validate the generated Open XML package for ISO/IEC 29500 Transi
 
 ## Editable PPTX Review
 
-Studio and the service can create editable PPTX directly from a saved HTML deck. The presentation object graph command remains available for advanced callers and requires a quality report:
+Studio and the service can create editable PPTX directly from a saved HTML deck. Before export, declare each slide `native-oriented`, `hybrid`, or `raster` in the plan and its `data-pptx-intent` attribute, identify mandatory-native object IDs, and bound every permitted fallback region. Run the same conservative readiness analysis shown in Studio:
+
+```bash
+pnpm cli -- pptx html-check --input deck.html --output pptx-html-readiness.json
+# Add --strict for native-oriented slide plans.
+```
+
+Fix blockers before export. Review untracked text, nested stable objects, unsupported media, and regional fallback warnings against the slide plan. Generic text and fills remain runtime-dependent until browser capture; the actual export inventory is authoritative.
+
+The presentation object graph command remains available for advanced callers and requires a quality report:
 
 ```bash
 pnpm cli -- pptx editable \
@@ -267,7 +276,7 @@ pnpm cli -- pptx review \
   --evidence "Reviewed render-back images; no blocking mismatch found."
 ```
 
-Do not describe editable PPTX as passed before this review. ISO/IEC 29500 Transitional package compatibility validation establishes file-format compatibility; it does not replace render-back and visual review.
+Do not describe editable PPTX as passed before this review. Run `pnpm cli -- pptx validate --input deck.pptx` on the actual output, inspect native/fallback inventory, and perform a representative edit-save-reopen check. ISO/IEC 29500 Transitional package compatibility establishes file-format validity; it does not replace practical editability, render-back, or visual review.
 
 ## Verify a Development Checkout
 

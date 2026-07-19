@@ -131,14 +131,17 @@ pnpm cli -- export \
 
 The service binds to `127.0.0.1`, accepts only contained source paths, and returns asynchronous job state and output paths. Studio uses the same service URL, token, and absolute saved-deck path. Choose `--format pptx` for raster output or `--format editable-pptx --quality-gate strict --wait` for native objects with declared fallbacks.
 
-Discover native PowerPoint capabilities and validate a package with:
+Preflight PPTX-oriented HTML, discover native PowerPoint capabilities, and validate the actual package with:
 
 ```bash
+pnpm cli -- pptx html-check --input deck.html --output pptx-html-readiness.json
 pnpm cli -- pptx shapes list
 pnpm cli -- pptx shapes resolve --name flowChartOffPageConnector
 pnpm cli -- pptx transitions
 pnpm cli -- pptx validate --input deck.pptx
 ```
+
+Studio shows the same conservative **Editable PPTX readiness** report. It blocks invalid identity or metadata and surfaces runtime-dependent or fallback risks. The exported object inventory remains authoritative; readiness does not replace strict rendered quality, package validation, render-back, or named visual review.
 
 ## Development and Verification
 

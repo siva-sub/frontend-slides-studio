@@ -29,6 +29,7 @@ Operate the complete Frontend Slides Studio pipeline. A normal request should pr
 
 <essential_principles>
 - **Source first:** reviewed Markdown and HTML are authoritative; generated JSON and exports are derived.
+- **PPTX intent before HTML:** when editable PPTX is requested, assign each slide and mandatory object a native, hybrid, or raster plan before authoring.
 - **Stable identity:** every slide has `data-slide-id`; editable elements have `data-object-id`.
 - **Fixed stage:** author new decks at 1920×1080 and scale uniformly. Imported 16:9 stages preserve their measured intrinsic size.
 - **Local first:** no account, cloud persistence, or hosted collaboration is required.
@@ -45,7 +46,8 @@ For a new deck, gather in one round:
 3. source material and supplied media;
 4. reading-first or speaker-led density;
 5. whether any slide explicitly needs visual-master treatment;
-6. required outputs: source HTML, author HTML, share HTML, PDF, raster PPTX, or editable PPTX evidence build.
+6. required outputs: source HTML, author HTML, share HTML, PDF, raster PPTX, or editable PPTX evidence build;
+7. for editable PPTX, which slide objects must remain native and which bounded fallback regions are acceptable.
 
 For an import, inspect the file first. Do not ask the user to restate facts visible in the artifact.
 </intake>
@@ -59,8 +61,9 @@ For an import, inspect the file first. Do not ask the user to restate facts visi
 - Asset planning, generation, staging, or reframing → read `workflows/assets.md`, then use the Studio media and asset controls.
 - Reference animation or object motion → read `workflows/motion.md`, then use the Studio motion and transition controls.
 - Explicit art-directed image slide → read `workflows/visual-master.md`.
-- Validation, build, quality, PDF, or PPTX → read `workflows/export.md`.
-- Native PowerPoint shapes, slide transitions, OOXML, shape discovery, or XML compatibility → read `references/pptx-native.md`, then `workflows/export.md`.
+- Editable PPTX, PowerPoint editability, or PPTX-oriented HTML → read `workflows/pptx-html.md`, then `references/pptx-native.md` and `workflows/export.md`.
+- Validation, build, quality, PDF, or raster PPTX → read `workflows/export.md`.
+- Native PowerPoint shapes, slide transitions, OOXML, shape discovery, or XML compatibility → read `workflows/pptx-html.md`, then `references/pptx-native.md` and `workflows/export.md`.
 - Contracts, stable IDs, provenance, or review states → read `references/contracts.md`.
 - Command uncertainty → read `references/commands.md`.
 - UI-control uncertainty → read `references/studio-controls.md`.
@@ -80,6 +83,8 @@ When Studio is requested or selected by default, do not stop after writing `deck
 - Never copy Dashi PPT code, themes, layouts, or exporter output into this repository. Behavioral comparison may inform an independently implemented workflow only.
 - Never discover API keys by walking a user's project for `.env` files.
 - Never describe raster PPTX as editable.
+- Never leave factual text, numbers, chart labels, logos, or evidence outside stable object boundaries in editable-PPTX HTML.
+- Never assume generic CSS is natively editable; treat computed-style classification as runtime-dependent until the export inventory proves otherwise.
 - Never pass an unvalidated shape preset or raw transition fragment into OOXML; use `@slides-studio/pptx-compat`.
 - Never call regeneration a rollback; exact restore copies a historical artifact, while regeneration creates a branch.
 - Never animate directly from aggregate MotionAnalysis without an explicit object-ID mapping.
@@ -105,7 +110,8 @@ pnpm cli -- build --input deck.html --mode share --output dist/deck.html
 - The agent can name which Studio controls and subsystem workflows it used.
 - Save writes the reviewed revision to the intended source, and the reopened artifact matches it.
 - Stable IDs are present and unique.
-- Layout, diagram, motion, visual-master, and safety validators have no blocking errors.
+- Editable-PPTX requests include a per-slide object mapping and a passing `pptx html-check` preflight.
+- Layout, diagram, motion, visual-master, PPTX readiness, and safety validators have no blocking errors.
 - Share HTML contains no authoring/private metadata and requires no npm runtime.
 - PDF/PPTX exports identify editability and review status honestly.
 - Final reporting includes the Studio URL, source path, output paths, verification evidence, limitations, and any residual manual review.

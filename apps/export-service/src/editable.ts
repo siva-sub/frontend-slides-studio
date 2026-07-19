@@ -112,10 +112,12 @@ async function browserSlide(page: Page, slideIndex: number): Promise<BrowserSlid
         const nativeShape: NativeShapeMetadata = { shape: element.dataset.pptxShape as NativeShapeMetadata["shape"], ...(gradient ? { gradient } : { fill: element.dataset.pptxFill || cssHex(computed.backgroundColor) }), stroke: element.dataset.pptxStroke || cssHex(computed.borderColor), ...(text ? { text } : {}), fontFace: computed.fontFamily, fontSize: Number.parseFloat(computed.fontSize) || 24, textColor: element.dataset.pptxTextColor || cssHex(computed.color), bold: (Number.parseFloat(computed.fontWeight) || 400) >= 600, align: (["left", "center", "right"].includes(computed.textAlign) ? computed.textAlign : "center") as NonNullable<NativeShapeMetadata["align"]>, ...(rotation !== undefined ? { rotation } : {}), ...(fillTransparency !== undefined ? { fillTransparency } : {}), ...(lineWidth !== undefined ? { lineWidth } : {}), ...(hyperlink ? { hyperlink } : {}) };
         return { id: element.dataset.objectId!, tagName, kind: "shape", ...(text ? { text } : {}), bbox, style: baseStyle, nativeShape, zIndex };
       }
-      const simpleTransform = computed.transform === "none" && computed.filter === "none" && computed.boxShadow === "none";
-      if (!hasStableChildren && text && simpleTransform && !["SVG", "PATH", "VIDEO", "CANVAS", "IFRAME"].includes(tagName)) return { id: element.dataset.objectId!, tagName, kind: "text", text, bbox, style: baseStyle, zIndex };
-      const hasFill = computed.backgroundColor !== "rgba(0, 0, 0, 0)" && computed.backgroundColor !== "transparent";
-      if (hasFill && simpleTransform && !["SVG", "PATH", "VIDEO", "CANVAS", "IFRAME"].includes(tagName)) return { id: element.dataset.objectId!, tagName, kind: "shape", bbox, style: baseStyle, zIndex };
+      const simpleVisual = computed.transform === "none" && computed.filter === "none" && computed.boxShadow === "none" && computed.textShadow === "none" && computed.opacity === "1" && computed.clipPath === "none" && computed.maskImage === "none" && computed.backgroundImage === "none";
+      const transparentBackground = computed.backgroundColor === "rgba(0, 0, 0, 0)" || computed.backgroundColor === "transparent";
+      const borderless = [computed.borderTopWidth, computed.borderRightWidth, computed.borderBottomWidth, computed.borderLeftWidth].every((value) => Number.parseFloat(value) === 0);
+      if (!hasStableChildren && text && simpleVisual && transparentBackground && borderless && !["SVG", "PATH", "VIDEO", "CANVAS", "IFRAME"].includes(tagName)) return { id: element.dataset.objectId!, tagName, kind: "text", text, bbox, style: baseStyle, zIndex };
+      const hasFill = !transparentBackground;
+      if (hasFill && !text && simpleVisual && !["SVG", "PATH", "VIDEO", "CANVAS", "IFRAME"].includes(tagName)) return { id: element.dataset.objectId!, tagName, kind: "shape", bbox, style: baseStyle, zIndex };
       if (hasStableChildren) return null;
       return { id: element.dataset.objectId!, tagName, kind: "unsupported", bbox, style: baseStyle, zIndex };
     }).filter((value): value is BrowserObject => Boolean(value));
@@ -135,7 +137,7 @@ async function captureCleanPlate(page: Page, slideIndex: number, outputDir: stri
     if (!slide) throw new Error(`slide ${active + 1} is unavailable`);
     const records = Array.from(slide.querySelectorAll<HTMLElement>("[data-object-id]")).map((element) => ({ element, style: element.getAttribute("style") }));
     (window as unknown as { __slidesStudioCleanPlate?: typeof records }).__slidesStudioCleanPlate = records;
-    records.forEach(({ element }) => element.style.setProperty("visibility", "hidden", "important"));
+    records.filter(({ element }) => !element.querySelector("[data-object-id]")).forEach(({ element }) => element.style.setProperty("visibility", "hidden", "important"));
   }, slideIndex);
   try { await page.locator(".slide").nth(slideIndex).screenshot({ path, animations: "disabled" }); }
   finally {
@@ -154,7 +156,7 @@ export async function captureEditableGraph(page: Page, sourcePath: string, outpu
   for (let slideIndex = 0; slideIndex < count; slideIndex += 1) {
     const snapshot = await browserSlide(page, slideIndex);
     const cleanPlate = await captureCleanPlate(page, slideIndex, outputDir, snapshot.id);
-    const elements: DomSnapshotElement[] = [{ id: `${snapshot.id}-clean-plate`, tagName: "IMG", bbox: { x: 0, y: 0, width: snapshot.width, height: snapshot.height }, style: {}, imagePath: cleanPlate, supported: false, fallbackPath: cleanPlate, zIndex: -100_000 }];
+    const elements: DomSnapshotElement[] = [{ id: `${snapshot.id}-clean-plate`, tagName: "IMG", bbox: { x: 0, y: 0, width: snapshot.width, height: snapshot.height }, style: {}, imagePath: cleanPlate, supported: false, fallbackPath: cleanPlate, fallbackReason: "visual clean plate", zIndex: -100_000 }];
     const diagrams: Array<{ objectId: string; spec: ReturnType<typeof parseDiagramSpec>; bbox: BrowserObject["bbox"]; zIndex: number }> = [];
     for (const object of snapshot.objects) {
       let imagePath: string | undefined;
